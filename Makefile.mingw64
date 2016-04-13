@@ -22,7 +22,7 @@ srcdir		= .
 srcdir_sl	= ./
 
 
-x               = 
+x               = 64.exe
 o               = .o
 
 prefix          = /usr/local

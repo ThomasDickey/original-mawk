@@ -230,8 +230,17 @@ LC_ALL=C $PROG -Wre -f repetitions.awk repetitions.dat | cmp -s - repetitions.ou
 
 #################################
 
+Begin "testing hex and octal numbers"
 
-Summary "tested $PROG"
+LC_ALL=C $PROG -f hexoct.awk > $STDOUT
+LC_ALL=C $PROG '{printf "%d %x %o\n", $1,$1,$1}' hexoct.dat >> $STDOUT
+cmp -s $STDOUT hexoct.out || Fail
+
+#################################
+
+
+Summary "\n##################################################\ntested $PROG"
+echo "##################################################"
 
 trap 0
 rm -f $STDOUT

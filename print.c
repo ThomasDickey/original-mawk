@@ -30,36 +30,36 @@ the GNU General Public License, version 2, 1991.
  * Revision 1.3  1993/07/15  23:38:19  mike
  * SIZE_T and indent
  *
- * Revision 1.2	 1993/07/07  00:07:50  mike
+ * Revision 1.2     1993/07/07  00:07:50  mike
  * more work on 1.2
  *
- * Revision 1.1.1.1  1993/07/03	 18:58:18  mike
+ * Revision 1.1.1.1  1993/07/03     18:58:18  mike
  * move source to cvs
  *
- * Revision 5.6	 1993/02/13  21:57:30  mike
+ * Revision 5.6     1993/02/13  21:57:30  mike
  * merge patch3
  *
- * Revision 5.5	 1993/01/01  21:30:48  mike
+ * Revision 5.5     1993/01/01  21:30:48  mike
  * split new_STRING() into new_STRING and new_STRING0
  *
- * Revision 5.4.1.2  1993/01/20	 12:53:11  mike
+ * Revision 5.4.1.2  1993/01/20     12:53:11  mike
  * d_to_l()
  *
- * Revision 5.4.1.1  1993/01/15	 03:33:47  mike
+ * Revision 5.4.1.1  1993/01/15     03:33:47  mike
  * patch3: safer double to int conversion
  *
- * Revision 5.4	 1992/11/29  18:03:11  mike
+ * Revision 5.4     1992/11/29  18:03:11  mike
  * when printing integers, convert doubles to
  * longs so output is the same on 16bit systems as 32bit systems
  *
- * Revision 5.3	 1992/08/17  14:23:21  brennan
+ * Revision 5.3     1992/08/17  14:23:21  brennan
  * patch2: After parsing, only bi_sprintf() uses string_buff.
  *
- * Revision 5.2	 1992/02/24  10:52:16  brennan
+ * Revision 5.2     1992/02/24  10:52:16  brennan
  * printf and sprintf() can now have more args than % conversions
  * removed HAVE_PRINTF_HD -- it was too obscure
  *
- * Revision 5.1	 91/12/05  07:56:22  brennan
+ * Revision 5.1     91/12/05  07:56:22  brennan
  * 1.1 pre-release
  *
 */
@@ -89,36 +89,36 @@ print_cell(CELL *p, FILE *fp)
 
     switch (p->type) {
     case C_NOINIT:
-	break;
+    break;
     case C_MBSTRN:
     case C_STRING:
     case C_STRNUM:
-	switch (len = string(p)->len) {
-	case 0:
-	    break;
-	case 1:
-	    putc(string(p)->str[0], fp);
-	    break;
-
-	default:
-	    fwrite(string(p)->str, (size_t) 1, len, fp);
-	}
-	break;
-
-    case C_DOUBLE:
-	{
-	    Int ival = d_to_I(p->dval);
-
-	    /* integers print as "%[l]d" */
-	    if ((double) ival == p->dval)
-		fprintf(fp, INT_FMT, ival);
-	    else
-		fprintf(fp, string(OFMT)->str, p->dval);
-	}
-	break;
+    switch (len = string(p)->len) {
+    case 0:
+        break;
+    case 1:
+        putc(string(p)->str[0], fp);
+        break;
 
     default:
-	bozo("bad cell passed to print_cell");
+        fwrite(string(p)->str, (size_t) 1, len, fp);
+    }
+    break;
+
+    case C_DOUBLE:
+    {
+        Int ival = d_to_I(p->dval);
+
+        /* integers print as "%[l]d" */
+        if ((double) ival == p->dval)
+        fprintf(fp, INT_FMT, ival);
+        else
+        fprintf(fp, string(OFMT)->str, p->dval);
+    }
+    break;
+
+    default:
+    bozo("bad cell passed to print_cell");
     }
 }
 
@@ -134,7 +134,7 @@ print_cell(CELL *p, FILE *fp)
 
 CELL *
 bi_print(
-	    CELL *sp)		/* stack ptr passed in */
+        CELL *sp)        /* stack ptr passed in */
 {
     register CELL *p;
     register int k;
@@ -142,54 +142,54 @@ bi_print(
 
     k = sp->type;
     if (k < 0) {
-	/* k holds redirection */
-	if ((--sp)->type < C_STRING)
-	    cast1_to_s(sp);
-	fp = (FILE *) file_find(string(sp), k);
-	free_STRING(string(sp));
-	k = (--sp)->type;
-	/* k now has number of arguments */
+    /* k holds redirection */
+    if ((--sp)->type < C_STRING)
+        cast1_to_s(sp);
+    fp = (FILE *) file_find(string(sp), k);
+    free_STRING(string(sp));
+    k = (--sp)->type;
+    /* k now has number of arguments */
     } else
-	fp = stdout;
+    fp = stdout;
 
     if (k) {
-	p = sp - k;		/* clear k variables off the stack */
-	sp = p - 1;
-	k--;
+    p = sp - k;        /* clear k variables off the stack */
+    sp = p - 1;
+    k--;
 
-	while (k > 0) {
-	    print_cell(p, fp);
-	    print_cell(OFS, fp);
-	    cell_destroy(p);
-	    p++;
-	    k--;
-	}
+    while (k > 0) {
+        print_cell(p, fp);
+        print_cell(OFS, fp);
+        cell_destroy(p);
+        p++;
+        k--;
+    }
 
-	print_cell(p, fp);
-	cell_destroy(p);
-    } else {			/* print $0 */
-	sp--;
-	print_cell(&field[0], fp);
+    print_cell(p, fp);
+    cell_destroy(p);
+    } else {            /* print $0 */
+    sp--;
+    print_cell(&field[0], fp);
     }
 
     print_cell(ORS, fp);
     if (ferror(fp))
-	write_error();
+    write_error();
     return sp;
 }
 
 /*---------- types and defs for doing printf and sprintf----*/
 typedef enum {
-    PF_C = 0,			/* %c */
-    PF_S,			/* %s */
-    PF_D,			/* int conversion */
-    PF_F,			/* float conversion */
-    PF_U,			/* unsigned conversion */
+    PF_C = 0,            /* %c */
+    PF_S,            /* %s */
+    PF_D,            /* int conversion */
+    PF_F,            /* float conversion */
+    PF_U,            /* unsigned conversion */
     PF_last
 } PF_enum;
 
 /* for switch on number of '*' and type */
-#define	 AST(num,type)	((PF_last)*(num)+(type))
+#define     AST(num,type)    ((PF_last)*(num)+(type))
 
 /* some picky ANSI compilers go berserk without this */
 typedef int (*PRINTER) (PTR, const char *,...);
@@ -200,7 +200,7 @@ static void
 bad_conversion(int cnt, const char *who, const char *format)
 {
     rt_error("improper conversion(number %d) in %s(\"%s\")",
-	     cnt, who, format);
+         cnt, who, format);
 }
 
 typedef enum {
@@ -218,10 +218,10 @@ typedef enum {
  */
 static int
 make_sfmt(const char *format,
-	  int *fill_in,
-	  int *width,
-	  int *prec,
-	  int *flags)
+      int *fill_in,
+      int *width,
+      int *prec,
+      int *flags)
 {
     int ch;
     int parts = 0;
@@ -237,88 +237,88 @@ make_sfmt(const char *format,
 
     ++format;
     while (*format != '\0' && ok_flag) {
-	switch (*format++) {
-	case ' ':
-	    *flags |= sfmtSPACE;
-	    break;
-	case '-':
-	    *flags |= sfmtMINUS;
-	    break;
-	case '0':
-	    *flags |= sfmtZEROS;
-	    break;
-	case '+':
-	    /* FALLTHRU */
-	case '#':
-	    /* ignore for %s */
-	    break;
-	default:
-	    ok_flag = 0;
-	    --format;
-	    break;
-	}
+    switch (*format++) {
+    case ' ':
+        *flags |= sfmtSPACE;
+        break;
+    case '-':
+        *flags |= sfmtMINUS;
+        break;
+    case '0':
+        *flags |= sfmtZEROS;
+        break;
+    case '+':
+        /* FALLTHRU */
+    case '#':
+        /* ignore for %s */
+        break;
+    default:
+        ok_flag = 0;
+        --format;
+        break;
+    }
     }
 
     while (*format != '\0' && success) {
-	switch (ch = *format++) {
-	case '0':
-	case '1':
-	case '2':
-	case '3':
-	case '4':
-	case '5':
-	case '6':
-	case '7':
-	case '8':
-	case '9':
-	    if (digits < 0) {
-		success = 0;
-	    } else if (digits++ == 0) {
-		value = (ch - '0');
-	    } else {
-		value = (10 * value) + (ch - '0');
-	    }
-	    break;
-	case '.':
-	    if (parts) {
-		success = 0;
-	    } else {
-		if (digits) {
-		    *width = value;
-		    *flags |= sfmtWIDTH;
-		    digits = 0;
-		    value = 0;
-		}
-		parts = 1;
-	    }
-	    break;
-	case '*':
-	    if (digits == 0) {
-		value = fill_in[used++];
-		digits = -1;
-	    } else {
-		success = 0;
-	    }
-	    break;
-	case 'c':
-	    /* FALLTHRU */
-	case 's':
-	    if (digits) {
-		if (parts) {
-		    *prec = value;
-		    *flags |= sfmtPREC;
-		} else {
-		    *width = value;
-		    *flags |= sfmtWIDTH;
-		}
-	    }
-	    if (*format != '\0')
-		success = 0;
-	    break;
-	default:
-	    success = 0;
-	    break;
-	}
+    switch (ch = *format++) {
+    case '0':
+    case '1':
+    case '2':
+    case '3':
+    case '4':
+    case '5':
+    case '6':
+    case '7':
+    case '8':
+    case '9':
+        if (digits < 0) {
+        success = 0;
+        } else if (digits++ == 0) {
+        value = (ch - '0');
+        } else {
+        value = (10 * value) + (ch - '0');
+        }
+        break;
+    case '.':
+        if (parts) {
+        success = 0;
+        } else {
+        if (digits) {
+            *width = value;
+            *flags |= sfmtWIDTH;
+            digits = 0;
+            value = 0;
+        }
+        parts = 1;
+        }
+        break;
+    case '*':
+        if (digits == 0) {
+        value = fill_in[used++];
+        digits = -1;
+        } else {
+        success = 0;
+        }
+        break;
+    case 'c':
+        /* FALLTHRU */
+    case 's':
+        if (digits) {
+        if (parts) {
+            *prec = value;
+            *flags |= sfmtPREC;
+        } else {
+            *width = value;
+            *flags |= sfmtWIDTH;
+        }
+        }
+        if (*format != '\0')
+        success = 0;
+        break;
+    default:
+        success = 0;
+        break;
+    }
     }
 
     return success;
@@ -326,8 +326,8 @@ make_sfmt(const char *format,
 
 #define SprintfOverflow(buffer, need) \
     if (buffer + need + 1 >= sprintf_limit) { \
-	    rt_overflow("sprintf buffer", \
-			(unsigned) (sprintf_limit - sprintf_buff)); \
+        rt_overflow("sprintf buffer", \
+            (unsigned) (sprintf_limit - sprintf_buff)); \
     }
 
 static char *
@@ -359,71 +359,71 @@ SprintfBlock(char *buffer, char *source, int length)
  */
 static PTR
 puts_sfmt(PTR target,
-	  FILE *fp,
-	  CELL *source,
-	  STRING * onechr,
-	  int width,
-	  int prec,
-	  int flags)
+      FILE *fp,
+      CELL *source,
+      STRING * onechr,
+      int width,
+      int prec,
+      int flags)
 {
     char *src_str = onechr ? onechr->str : string(source)->str;
     int src_len = onechr ? 1 : (int) string(source)->len;
 
     if (width < 0) {
-	width = -width;
-	flags |= sfmtMINUS;
+    width = -width;
+    flags |= sfmtMINUS;
     }
 
     if (fp != 0) {
 
-	if (flags & sfmtSPACE) {
-	    if (src_len == 0)
-		fputc(' ', fp);
-	}
-	if (flags & sfmtPREC) {
-	    if (src_len > prec)
-		src_len = prec;
-	}
-	if (!(flags & sfmtWIDTH)) {
-	    width = src_len;
-	}
-	if (!(flags & sfmtMINUS)) {
-	    while (src_len < width) {
-		fputc(' ', fp);
-		--width;
-	    }
-	}
-	fwrite(src_str, sizeof(char), (size_t) src_len, fp);
-	while (src_len < width) {
-	    fputc(' ', fp);
-	    --width;
-	}
+    if (flags & sfmtSPACE) {
+        if (src_len == 0)
+        fputc(' ', fp);
+    }
+    if (flags & sfmtPREC) {
+        if (src_len > prec)
+        src_len = prec;
+    }
+    if (!(flags & sfmtWIDTH)) {
+        width = src_len;
+    }
+    if (!(flags & sfmtMINUS)) {
+        while (src_len < width) {
+        fputc(' ', fp);
+        --width;
+        }
+    }
+    fwrite(src_str, sizeof(char), (size_t) src_len, fp);
+    while (src_len < width) {
+        fputc(' ', fp);
+        --width;
+    }
     } else {
-	char *buffer = (char *) target;		/* points into sprintf_buff */
+    char *buffer = (char *) target;        /* points into sprintf_buff */
 
-	if (flags & sfmtSPACE) {
-	    if (src_len == 0) {
-		buffer = SprintfChar(buffer, ' ');
-	    }
-	}
-	if (flags & sfmtPREC) {
-	    if (src_len > prec)
-		src_len = prec;
-	}
-	if (!(flags & sfmtWIDTH)) {
-	    width = src_len;
-	}
-	if (!(flags & sfmtMINUS)) {
-	    if (src_len < width) {
-		buffer = SprintfFill(buffer, ' ', width - src_len);
-		width = src_len;
-	    }
-	}
-	buffer = SprintfBlock(buffer, src_str, src_len);
-	if (src_len < width) {
-	    buffer = SprintfFill(buffer, ' ', width - src_len);
-	}
-	target = buffer;
+    if (flags & sfmtSPACE) {
+        if (src_len == 0) {
+        buffer = SprintfChar(buffer, ' ');
+        }
+    }
+    if (flags & sfmtPREC) {
+        if (src_len > prec)
+        src_len = prec;
+    }
+    if (!(flags & sfmtWIDTH)) {
+        width = src_len;
+    }
+    if (!(flags & sfmtMINUS)) {
+        if (src_len < width) {
+        buffer = SprintfFill(buffer, ' ', width - src_len);
+        width = src_len;
+        }
+    }
+    buffer = SprintfBlock(buffer, src_str, src_len);
+    if (src_len < width) {
+        buffer = SprintfFill(buffer, ' ', width - src_len);
+    }
+    target = buffer;
     }
     return target;
 }
@@ -436,274 +436,276 @@ puts_sfmt(PTR target,
  */
 static STRING *
 do_printf(
-	     FILE *fp,
-	     char *format,
-	     unsigned argcnt,	/* number of args on eval stack */
-	     CELL *cp)		/* ptr to an array of arguments
-				   (on the eval stack) */
+         FILE *fp,
+         char *format,
+         unsigned argcnt,    /* number of args on eval stack */
+         CELL *cp)        /* ptr to an array of arguments
+                   (on the eval stack) */
 {
     char save;
     char *p;
     register char *q = format;
     register char *target;
-    int l_flag, h_flag;		/* seen %ld or %hd  */
+    int l_flag, h_flag;        /* seen %ld or %hd  */
     int ast_cnt;
     int ast[2];
     UInt Uval = 0;
     Int Ival = 0;
     int sfmt_width, sfmt_prec, sfmt_flags, s_format;
-    int num_conversion = 0;	/* for error messages */
-    const char *who;		/*ditto */
-    int pf_type = 0;		/* conversion type */
-    PRINTER printer;		/* pts at fprintf() or sprintf() */
+    int num_conversion = 0;    /* for error messages */
+    const char *who;        /*ditto */
+    int pf_type = 0;        /* conversion type */
+    PRINTER printer;        /* pts at fprintf() or sprintf() */
     STRING onechr;
 
-#ifdef	 SHORT_INTS
-    char xbuff[256];		/* splice in l qualifier here */
+#ifdef     SHORT_INTS
+    char xbuff[256];        /* splice in l qualifier here */
 #endif
 
-    if (fp == (FILE *) 0) {	/* doing sprintf */
-	target = sprintf_buff;
-	printer = (PRINTER) sprintf;
-	who = "sprintf";
-    } else {			/* doing printf */
-	target = (char *) fp;	/* will never change */
-	printer = (PRINTER) fprintf;
-	who = "printf";
+    if (fp == (FILE *) 0) {    /* doing sprintf */
+    target = sprintf_buff;
+    printer = (PRINTER) sprintf;
+    who = "sprintf";
+    } else {            /* doing printf */
+    target = (char *) fp;    /* will never change */
+    printer = (PRINTER) fprintf;
+    who = "printf";
     }
 
     while (1) {
-	if (fp) {		/* printf */
-	    while (*q != '%') {
-		if (*q == 0) {
-		    if (ferror(fp))
-			write_error();
-		    /* return is ignored */
-		    return (STRING *) 0;
-		} else {
-		    putc(*q, fp);
-		    q++;
-		}
-	    }
-	} else {		/* sprintf */
-	    while (*q != '%') {
-		if (*q == 0) {
-		    if (target > sprintf_limit)		/* damaged */
-		    {
-			/* hope this works */
-			rt_overflow("sprintf buffer",
-				    (unsigned) (sprintf_limit - sprintf_buff));
-		    } else {	/* really done */
-			return new_STRING1(sprintf_buff,
-					   (size_t) (target - sprintf_buff));
-		    }
-		} else {
-		    *target++ = *q++;
-		}
-	    }
-	}
+    if (fp) {        /* printf */
+        while (*q != '%') {
+        if (*q == 0) {
+            if (ferror(fp))
+            write_error();
+            /* return is ignored */
+            return (STRING *) 0;
+        } else {
+            putc(*q, fp);
+            q++;
+        }
+        }
+    } else {        /* sprintf */
+        while (*q != '%') {
+        if (*q == 0) {
+            if (target > sprintf_limit)        /* damaged */
+            {
+            /* hope this works */
+            rt_overflow("sprintf buffer",
+                    (unsigned) (sprintf_limit - sprintf_buff));
+            } else {    /* really done */
+            return new_STRING1(sprintf_buff,
+                       (size_t) (target - sprintf_buff));
+            }
+        } else {
+            *target++ = *q++;
+        }
+        }
+    }
 
-	/* *q == '%' */
-	num_conversion++;
+    /* *q == '%' */
+    num_conversion++;
 
-	if (*++q == '%') {	/* %% */
-	    if (fp)
-		putc(*q, fp);
-	    else
-		*target++ = *q;
+    if (*++q == '%') {    /* %% */
+        if (fp)
+        putc(*q, fp);
+        else
+        *target++ = *q;
 
-	    q++;
-	    continue;
-	}
+        q++;
+        continue;
+    }
 
-	/* mark the '%' with p */
-	p = q - 1;
+    /* mark the '%' with p */
+    p = q - 1;
 
-	/* eat the flags */
-	while (*q == '-' || *q == '+' || *q == ' ' ||
-	       *q == '#' || *q == '0')
-	    q++;
+    /* eat the flags */
+    while (*q == '-' || *q == '+' || *q == ' ' ||
+           *q == '#' || *q == '0')
+        q++;
 
-	ast_cnt = 0;
-	ast[0] = 0;
-	if (*q == '*') {
-	    if (cp->type != C_DOUBLE)
-		cast1_to_d(cp);
-	    ast[ast_cnt++] = d_to_i(cp++->dval);
-	    argcnt--;
-	    q++;
-	} else
-	    while (scan_code[*(unsigned char *) q] == SC_DIGIT)
-		q++;
-	/* width is done */
+    ast_cnt = 0;
+    ast[0] = 0;
+    if (*q == '*') {
+        if (cp->type != C_DOUBLE)
+        cast1_to_d(cp);
+        ast[ast_cnt++] = d_to_i(cp++->dval);
+        argcnt--;
+        q++;
+    } else
+        while (scan_code[*(unsigned char *) q] == SC_DIGIT)
+        q++;
+    /* width is done */
 
-	if (*q == '.') {	/* have precision */
-	    q++;
-	    if (*q == '*') {
-		if (cp->type != C_DOUBLE)
-		    cast1_to_d(cp);
-		ast[ast_cnt++] = d_to_i(cp++->dval);
-		argcnt--;
-		q++;
-	    } else {
-		while (scan_code[*(unsigned char *) q] == SC_DIGIT)
-		    q++;
-	    }
-	}
+    if (*q == '.') {    /* have precision */
+        q++;
+        if (*q == '*') {
+        if (cp->type != C_DOUBLE)
+            cast1_to_d(cp);
+        ast[ast_cnt++] = d_to_i(cp++->dval);
+        argcnt--;
+        q++;
+        } else {
+        while (scan_code[*(unsigned char *) q] == SC_DIGIT)
+            q++;
+        }
+    }
 
-	if (argcnt <= 0)
-	    rt_error("not enough arguments passed to %s(\"%s\")",
-		     who, format);
+    if (argcnt <= 0)
+        rt_error("not enough arguments passed to %s(\"%s\")",
+             who, format);
 
-	l_flag = h_flag = 0;
+    l_flag = h_flag = 0;
 
-	if (*q == 'l') {
-	    q++;
-	    l_flag = 1;
-	} else if (*q == 'h') {
-	    q++;
-	    h_flag = 1;
-	}
-	switch (*q++) {
-	case 's':
-	    if (l_flag + h_flag)
-		bad_conversion(num_conversion, who, format);
-	    if (cp->type < C_STRING)
-		cast1_to_s(cp);
-	    pf_type = PF_S;
-	    break;
+    if (*q == 'l') {
+        q++;
+        l_flag = 1;
+    } else if (*q == 'h') {
+        q++;
+        h_flag = 1;
+    }
+    switch (*q++) {
+    case 's':
+        if (l_flag + h_flag)
+        bad_conversion(num_conversion, who, format);
+        if (cp->type < C_STRING)
+        cast1_to_s(cp);
+        pf_type = PF_S;
+        break;
 
-	case 'c':
-	    if (l_flag + h_flag)
-		bad_conversion(num_conversion, who, format);
+    case 'c':
+        if (l_flag + h_flag)
+        bad_conversion(num_conversion, who, format);
 
-	    switch (cp->type) {
-	    case C_NOINIT:
-		Ival = 0;
-		break;
+        switch (cp->type) {
+        case C_NOINIT:
+        Ival = 0;
+        break;
 
-	    case C_STRNUM:
-	    case C_DOUBLE:
-		Ival = d_to_I(cp->dval);
-		break;
+        case C_STRNUM:
+        case C_DOUBLE:
+        Ival = d_to_I(cp->dval);
+        break;
 
-	    case C_STRING:
-		Ival = string(cp)->str[0];
-		break;
+        case C_STRING:
+        /* fall thru to check for bad number formats */ 
+        //Ival = string(cp)->str[0];
+        //break;
+        /* fall thru */
+        case C_MBSTRN:
+        check_strnum(cp);
+        Ival = ((cp->type == C_STRING)
+            ? string(cp)->str[0]
+            : d_to_I(cp->dval));
+        break;
 
-	    case C_MBSTRN:
-		check_strnum(cp);
-		Ival = ((cp->type == C_STRING)
-			? string(cp)->str[0]
-			: d_to_I(cp->dval));
-		break;
+        default:
+        bozo("printf %c");
+        }
+        onechr.len = 1;
+        onechr.str[0] = (char) Ival;
 
-	    default:
-		bozo("printf %c");
-	    }
-	    onechr.len = 1;
-	    onechr.str[0] = (char) Ival;
+        pf_type = PF_C;
+        break;
 
-	    pf_type = PF_C;
-	    break;
+    case 'd':
+    case 'i':
+        if (cp->type != C_DOUBLE)
+        cast1_to_d(cp);
+            Ival = d_to_I(cp->dval);
+        pf_type = PF_D;
+        break;
 
-	case 'd':
-	case 'i':
-	    if (cp->type != C_DOUBLE)
-		cast1_to_d(cp);
-    	    Ival = d_to_I(cp->dval);
-	    pf_type = PF_D;
-	    break;
+    case 'o':
+    case 'x':
+    case 'X':
+    case 'u':
+        if (cp->type != C_DOUBLE)
+        cast1_to_d(cp);
+        Uval = d_to_U(cp->dval);
+        pf_type = PF_U;
+        break;
 
-	case 'o':
-	case 'x':
-	case 'X':
-	case 'u':
-	    if (cp->type != C_DOUBLE)
-		cast1_to_d(cp);
-	    Uval = d_to_U(cp->dval);
-	    pf_type = PF_U;
-	    break;
+    case 'e':
+    case 'g':
+    case 'f':
+    case 'E':
+    case 'G':
+        if (h_flag + l_flag)
+        bad_conversion(num_conversion, who, format);
+        if (cp->type != C_DOUBLE)
+        cast1_to_d(cp);
+        pf_type = PF_F;
+        break;
 
-	case 'e':
-	case 'g':
-	case 'f':
-	case 'E':
-	case 'G':
-	    if (h_flag + l_flag)
-		bad_conversion(num_conversion, who, format);
-	    if (cp->type != C_DOUBLE)
-		cast1_to_d(cp);
-	    pf_type = PF_F;
-	    break;
+    default:
+        bad_conversion(num_conversion, who, format);
+    }
 
-	default:
-	    bad_conversion(num_conversion, who, format);
-	}
+    save = *q;
+    *q = 0;
 
-	save = *q;
-	*q = 0;
+#ifdef    SHORT_INTS
+    if (pf_type == PF_D) {
+        /* need to splice in long modifier */
+        strcpy(xbuff, p);
 
-#ifdef	SHORT_INTS
-	if (pf_type == PF_D) {
-	    /* need to splice in long modifier */
-	    strcpy(xbuff, p);
+        if (l_flag) /* do nothing */ ;
+        else {
+        int k = q - p;
 
-	    if (l_flag) /* do nothing */ ;
-	    else {
-		int k = q - p;
-
-		if (h_flag) {
-		    Ival = (short) Ival;
-		    /* replace the 'h' with 'l' (really!) */
-		    xbuff[k - 2] = 'l';
-		    if (xbuff[k - 1] != 'd' && xbuff[k - 1] != 'i')
-			Ival &= 0xffff;
-		} else {
-		    /* the usual case */
-		    xbuff[k] = xbuff[k - 1];
-		    xbuff[k - 1] = 'l';
-		    xbuff[k + 1] = 0;
-		}
-	    }
-	}
+        if (h_flag) {
+            Ival = (short) Ival;
+            /* replace the 'h' with 'l' (really!) */
+            xbuff[k - 2] = 'l';
+            if (xbuff[k - 1] != 'd' && xbuff[k - 1] != 'i')
+            Ival &= 0xffff;
+        } else {
+            /* the usual case */
+            xbuff[k] = xbuff[k - 1];
+            xbuff[k - 1] = 'l';
+            xbuff[k + 1] = 0;
+        }
+        }
+    }
 #endif
 
 #define PUTS_C_ARGS target, fp, 0,  &onechr, sfmt_width, sfmt_prec, sfmt_flags
 #define PUTS_S_ARGS target, fp, cp, 0,       sfmt_width, sfmt_prec, sfmt_flags
 
-	/* ready to call printf() */
-	s_format = 0;
-	switch (AST(ast_cnt, pf_type)) {
-	case AST(0, PF_C):
-	    /* FALLTHRU */
-	case AST(1, PF_C):
-	    /* FALLTHRU */
-	case AST(2, PF_C):
-	    s_format = 1;
-	    make_sfmt(p, ast, &sfmt_width, &sfmt_prec, &sfmt_flags);
-	    target = puts_sfmt(PUTS_C_ARGS);
-	    break;
+    /* ready to call printf() */
+    s_format = 0;
+    switch (AST(ast_cnt, pf_type)) {
+    case AST(0, PF_C):
+        /* FALLTHRU */
+    case AST(1, PF_C):
+        /* FALLTHRU */
+    case AST(2, PF_C):
+        s_format = 1;
+        make_sfmt(p, ast, &sfmt_width, &sfmt_prec, &sfmt_flags);
+        target = puts_sfmt(PUTS_C_ARGS);
+        break;
 
-	case AST(0, PF_S):
-	    /* FALLTHRU */
-	case AST(1, PF_S):
-	    /* FALLTHRU */
-	case AST(2, PF_S):
-	    s_format = 1;
-	    make_sfmt(p, ast, &sfmt_width, &sfmt_prec, &sfmt_flags);
-	    target = puts_sfmt(PUTS_S_ARGS);
-	    break;
+    case AST(0, PF_S):
+        /* FALLTHRU */
+    case AST(1, PF_S):
+        /* FALLTHRU */
+    case AST(2, PF_S):
+        s_format = 1;
+        make_sfmt(p, ast, &sfmt_width, &sfmt_prec, &sfmt_flags);
+        target = puts_sfmt(PUTS_S_ARGS);
+        break;
 
-#ifdef	SHORT_INTS
-#define FMT	xbuff		/* format in xbuff */
+#ifdef    SHORT_INTS
+#define FMT    xbuff        /* format in xbuff */
 #else
-#define FMT	p		/* p -> format */
+#define FMT    p        /* p -> format */
 #endif
-	case AST(0, PF_D):
-            if (cp->dval > Max_Int) {
-		STRING *newp;
-		char *np;
+    case AST(0, PF_D):
+            if (cp->dval > Max_Int && l_flag == 0
+                    && h_flag == 0) {
+        STRING *newp;
+        char *np;
                 newp = new_STRING0(strlen(p)+5);
                 np = (char *) newp->str;
                 while (*p != '\0') {
@@ -711,29 +713,29 @@ do_printf(
                         *np++ = '.';
                         *np++ = '0';
                         *np++ = 'f';
-			++p;
+                        ++p;
                     } else 
                         *np++ = *p++;
                 }
                 np = '\0';
-	        (*printer) ((PTR) target,  newp->str, cp->dval);
+            (*printer) ((PTR) target,  newp->str, cp->dval);
                 free_STRING(newp);
             } else 
-	        (*printer) ((PTR) target, FMT, Ival);
-	    break;
+            (*printer) ((PTR) target, FMT, Ival);
+        break;
 
-	case AST(1, PF_D):
-	    (*printer) ((PTR) target, FMT, ast[0], Ival);
-	    break;
+    case AST(1, PF_D):
+        (*printer) ((PTR) target, FMT, ast[0], Ival);
+        break;
 
-	case AST(2, PF_D):
-	    (*printer) ((PTR) target, FMT, ast[0], ast[1], Ival);
-	    break;
+    case AST(2, PF_D):
+        (*printer) ((PTR) target, FMT, ast[0], ast[1], Ival);
+        break;
 
-	case AST(0, PF_U):
-            if (*(p+1) == 'u' && cp->dval > Max_Int) {
-		STRING *newp;
-		char *np;
+    case AST(0, PF_U):
+            if (*(p+1) == 'u' && cp->dval > Max_Int ) {
+        STRING *newp;
+        char *np;
                 newp = new_STRING0(strlen(p)+5);
                 np = (char *) newp->str;
                 while (*p != '\0') {
@@ -741,46 +743,46 @@ do_printf(
                         *np++ = '.';
                         *np++ = '0';
                         *np++ = 'f';
-			++p;
+            ++p;
                     } else 
                         *np++ = *p++;
                 }
                 np = '\0';
-	        (*printer) ((PTR) target,  newp->str, cp->dval);
+            (*printer) ((PTR) target,  newp->str, cp->dval);
                 free_STRING(newp);
             } else 
-	        (*printer) ((PTR) target, FMT, Uval);
-	    break;
+            (*printer) ((PTR) target, FMT, Uval);
+        break;
 
-	case AST(1, PF_U):
-	    (*printer) ((PTR) target, FMT, ast[0], Uval);
-	    break;
+    case AST(1, PF_U):
+        (*printer) ((PTR) target, FMT, ast[0], Uval);
+        break;
 
-	case AST(2, PF_U):
-	    (*printer) ((PTR) target, FMT, ast[0], ast[1], Uval);
-	    break;
+    case AST(2, PF_U):
+        (*printer) ((PTR) target, FMT, ast[0], ast[1], Uval);
+        break;
 
-#undef	FMT
+#undef    FMT
 
-	case AST(0, PF_F):
-	    (*printer) ((PTR) target, p, cp->dval);
-	    break;
+    case AST(0, PF_F):
+        (*printer) ((PTR) target, p, cp->dval);
+        break;
 
-	case AST(1, PF_F):
-	    (*printer) ((PTR) target, p, ast[0], cp->dval);
-	    break;
+    case AST(1, PF_F):
+        (*printer) ((PTR) target, p, ast[0], cp->dval);
+        break;
 
-	case AST(2, PF_F):
-	    (*printer) ((PTR) target, p, ast[0], ast[1], cp->dval);
-	    break;
-	}
-	if (fp == (FILE *) 0 && !s_format) {
-	    while (*target)
-		target++;
-	}
-	*q = save;
-	argcnt--;
-	cp++;
+    case AST(2, PF_F):
+        (*printer) ((PTR) target, p, ast[0], ast[1], cp->dval);
+        break;
+    }
+    if (fp == (FILE *) 0 && !s_format) {
+        while (*target)
+        target++;
+    }
+    *q = save;
+    argcnt--;
+    cp++;
     }
 }
 
@@ -795,27 +797,27 @@ bi_printf(CELL *sp)
 
     k = sp->type;
     if (k < 0) {
-	/* k has redirection */
-	if ((--sp)->type < C_STRING)
-	    cast1_to_s(sp);
-	fp = (FILE *) file_find(string(sp), k);
-	free_STRING(string(sp));
-	k = (--sp)->type;
-	/* k is now number of args including format */
+    /* k has redirection */
+    if ((--sp)->type < C_STRING)
+        cast1_to_s(sp);
+    fp = (FILE *) file_find(string(sp), k);
+    free_STRING(string(sp));
+    k = (--sp)->type;
+    /* k is now number of args including format */
     } else
-	fp = stdout;
+    fp = stdout;
 
-    sp -= k;			/* sp points at the format string */
+    sp -= k;            /* sp points at the format string */
     k--;
 
     if (sp->type < C_STRING)
-	cast1_to_s(sp);
+    cast1_to_s(sp);
     do_printf(fp, string(sp)->str, (unsigned) k, sp + 1);
     free_STRING(string(sp));
 
     /* cleanup arguments on eval stack */
     for (p = sp + 1; k; k--, p++)
-	cell_destroy(p);
+    cell_destroy(p);
     return --sp;
 }
 
@@ -828,18 +830,18 @@ bi_sprintf(CELL *sp)
 
     TRACE_FUNC("bi_sprintf", sp);
 
-    sp -= argcnt;		/* sp points at the format string */
+    sp -= argcnt;        /* sp points at the format string */
     argcnt--;
 
     if (sp->type != C_STRING)
-	cast1_to_s(sp);
+    cast1_to_s(sp);
     sval = do_printf((FILE *) 0, string(sp)->str, (unsigned) argcnt, sp + 1);
     free_STRING(string(sp));
     sp->ptr = (PTR) sval;
 
     /* cleanup */
     for (p = sp + 1; argcnt; argcnt--, p++)
-	cell_destroy(p);
+    cell_destroy(p);
 
     return sp;
 }

@@ -45,6 +45,7 @@ the GNU General Public License, version 2, 1991.
 
 #include  "mawk.h"
 #include  "init.h"
+#include  "scan.h"
 
 #include  <math.h>
 
@@ -294,8 +295,7 @@ strtod_with_ovf_bug(const char *s, char **ep)
     double ret;
 
     fpsetmask(entry_mask);	/* traps off */
-#undef strtod			/* make real strtod visible */
-    ret = strtod(s, ep);
+    ret = strtod2(s, ep);
     fpsetmask(working_mask);	/* traps on */
     return ret;
 }

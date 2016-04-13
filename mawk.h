@@ -212,8 +212,11 @@ extern const char *find_kw_str(int);
 extern void da_string(FILE *fp, const char *, size_t);
 
 #ifdef HAVE_STRTOD_OVF_BUG
-extern double strtod_with_ovf_bug(const char *, char **);
-#define strtod  strtod_with_ovf_bug
+ extern double strtod_with_ovf_bug(const char *, char **);
+ #define xstrtod  strtod_with_ovf_bug
+#else
+ extern double strtod2(const char *, char **);
+ #define xstrtod strtod2
 #endif
 
 #if OPT_TRACE > 0

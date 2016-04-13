@@ -90,11 +90,11 @@ cast1_to_d(CELL *cp)
 
 	    errno = 0;
 #ifdef FPE_TRAPS_ON		/* look for overflow error */
-	    cp->dval = strtod(s->str, (char **) 0);
+	    cp->dval = xstrtod(s->str, (char **) 0);
 	    if (errno && cp->dval != 0.0)	/* ignore underflow */
 		rt_error("overflow converting %s to double", s->str);
 #else
-	    cp->dval = strtod(s->str, (char **) 0);
+	    cp->dval = xstrtod(s->str, (char **) 0);
 #endif
 	    free_STRING(s);
 	}
@@ -133,11 +133,11 @@ cast2_to_d(CELL *cp)
 
 	errno = 0;
 #ifdef FPE_TRAPS_ON		/* look for overflow error */
-	cp->dval = strtod(s->str, (char **) 0);
+	cp->dval = xstrtod(s->str, (char **) 0);
 	if (errno && cp->dval != 0.0)	/* ignore underflow */
 	    rt_error("overflow converting %s to double", s->str);
 #else
-	cp->dval = strtod(s->str, (char **) 0);
+	cp->dval = xstrtod(s->str, (char **) 0);
 #endif
 	free_STRING(s);
 	break;
@@ -167,11 +167,11 @@ cast2_to_d(CELL *cp)
 
 	errno = 0;
 #ifdef FPE_TRAPS_ON		/* look for overflow error */
-	cp->dval = strtod(s->str, (char **) 0);
+	cp->dval = xstrtod(s->str, (char **) 0);
 	if (errno && cp->dval != 0.0)	/* ignore underflow */
 	    rt_error("overflow converting %s to double", s->str);
 #else
-	cp->dval = strtod(s->str, (char **) 0);
+	cp->dval = xstrtod(s->str, (char **) 0);
 #endif
 	free_STRING(s);
 	break;
@@ -368,28 +368,29 @@ check_strnum(CELL *cp)
     while (scan_code[*s] == SC_SPACE)
 	s++;
     if (s == q)
-	return;
+        return;
 
     while (scan_code[q[-1]] == SC_SPACE)
 	q--;
     if (scan_code[q[-1]] != SC_DIGIT &&
-	q[-1] != '.')
-	return;
+            q[-1] != '.' && q[-1] == '+' && q[-1] == '-')
+        return;
+    
 
     switch (scan_code[*s]) {
     case SC_DIGIT:
     case SC_PLUS:
     case SC_MINUS:
     case SC_DOT:
-
+    
 	errno = 0;
 #ifdef FPE_TRAPS_ON
-	cp->dval = strtod((char *) s, &temp);
+	cp->dval = xstrtod((char *) s, &temp);
 	/* make overflow pure string */
 	if (errno && cp->dval != 0.0)
 	    break;
 #else
-	cp->dval = strtod((char *) s, &temp);
+	cp->dval = xstrtod((char *) s, &temp);
 #endif
 #ifdef ERANGE
 	if (errno == ERANGE)
@@ -430,9 +431,9 @@ Int
 d_to_I(double d)
 {
     if (d >= Max_Int)
-	return Max_Int;
+        return Max_Int;
     if (d > -Max_Int)
-	return (Int) d;
+        return (Int) d;
     return -Max_Int;
 }
 
@@ -446,10 +447,9 @@ UInt
 d_to_U(double d)
 {
     if (d >= Max_UInt)
-	return Max_UInt;
-    if (d > 0)
-	return (UInt) d;
-    return 0;
+        return Max_UInt;
+    /* 2's complement for negative d */
+    return (UInt) d;
 }
 
 #ifdef NO_LEAKS

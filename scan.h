@@ -47,6 +47,8 @@ extern void eat_nl(void);
 /* in error.c */
 extern void unexpected_char(void);
 
+extern double strtod2(const char *, char **);
+
 #define  ct_ret(x)  return current_token = (x)
 
 #define  next() (*buffp ? *buffp++ : slow_next())
@@ -60,5 +62,21 @@ extern void unexpected_char(void);
                                      case c2: ct_ret(x2) ;\
                                      default: un_next() ;\
                                               ct_ret(d) ; }
+
+
+static
+char hex_val['f' - 'A' + 1] =
+{
+    10, 11, 12, 13, 14, 15, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0,
+    10, 11, 12, 13, 14, 15};
+
+#define isoctal(x)      ((x)>='0' && (x)<='7')
+#define	hex_value(x)	hex_val[(x)-'A']
+#define ishexalpha(x)   (('A' <= (x) && (x) <= 'f' && hex_value(x)))
+#define ishex(x)        (scan_code[(x)] == SC_DIGIT || ishexalpha(x))	  
+#define isdecimal(x)    ((x)>='0' && (x)<='9')
 
 #endif /* SCAN_H_INCLUDED */

@@ -764,38 +764,72 @@ collect_decimal(int c, int *flag)
     char *temp;
     char *last_decimal = 0;
     double d;
+    int isahex = 0;
+    int isanoctal = 0;
 
     *flag = 0;
     string_buff[0] = (char) c;
 
     if (c == '.') {
-	last_decimal = p - 1;
-	CheckStringSize(p);
-	if (scan_code[NextUChar(*p++)] != SC_DIGIT) {
-	    *flag = UNEXPECTED;
-	    yylval.ival = '.';
-	    return 0.0;
-	}
-    } else {
-	while (1) {
-	    CheckStringSize(p);
-	    if (scan_code[NextUChar(*p++)] != SC_DIGIT) {
-		break;
-	    }
-	};
-	if (p[-1] == '.') {
-	    last_decimal = p - 1;
-	} else {
-	    un_next();
-	    p--;
-	}
+        last_decimal = p - 1;
+        CheckStringSize(p);
+        if (scan_code[NextUChar(*p++)] != SC_DIGIT) {
+            *flag = UNEXPECTED;
+            yylval.ival = '.';
+            return 0.0;
+        }
+    }
+    /* Hex or Octal or numeric */
+    else if (c == '0') {
+        d = 0;
+        CheckStringSize(p);
+        if (scan_code[NextUChar(*p++)] == SC_DIGIT && isoctal(p[-1])) {
+            /* Octal */
+            while (1) {
+                CheckStringSize(p);
+                if (scan_code[NextUChar(*p++)] != SC_DIGIT || !isoctal(p[-1])) {
+                    break;
+                }
+            }
+            un_next();
+            *--p = 0;
+            { goto do_strtod; }
+        }
+        else if (p[-1] == 'x' || p[-1] == 'X') {
+            /* Hex */
+            while (1) {
+                CheckStringSize(p);
+                if (scan_code[NextUChar(*p++)] != SC_DIGIT) {
+                    if (!ishexalpha(p[-1])) {
+                        break;
+                    }
+                }
+            }
+            un_next();
+            *--p = 0;
+            { goto do_strtod; }
+        }
+    }
+    else {
+        while (1) {
+            CheckStringSize(p);
+            if (scan_code[NextUChar(*p++)] != SC_DIGIT) {
+                break;
+            }
+        }
+        if (p[-1] == '.') {
+            last_decimal = p - 1;
+        } else {
+            un_next();
+            p--;
+        }
     }
     /* get rest of digits after decimal point */
     while (1) {
-	CheckStringSize(p);
-	if (scan_code[NextUChar(*p++)] != SC_DIGIT) {
-	    break;
-	}
+        CheckStringSize(p);
+        if (scan_code[NextUChar(*p++)] != SC_DIGIT) {
+            break;
+        }
     }
 
     /* check for exponent */
@@ -834,8 +868,9 @@ collect_decimal(int c, int *flag)
     }
 #endif
 
+do_strtod:
     errno = 0;			/* check for overflow/underflow */
-    d = strtod(string_buff, &temp);
+    d = xstrtod(string_buff, &temp);
     endp = temp;
 
 #ifndef	 STRTOD_UNDERFLOW_ON_ZERO_BUG
@@ -864,20 +899,6 @@ collect_decimal(int c, int *flag)
 
 /*----------  process escape characters ---------------*/
 
-static char hex_val['f' - 'A' + 1] =
-{
-    10, 11, 12, 13, 14, 15, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0,
-    10, 11, 12, 13, 14, 15};
-
-#define isoctal(x)  ((x)>='0'&&(x)<='7')
-
-#define	 hex_value(x)	hex_val[(x)-'A']
-
-#define ishex(x) (scan_code[x] == SC_DIGIT ||\
-		  ('A' <= (x) && (x) <= 'f' && hex_value(x)))
 
 /* process one , two or three octal digits
    moving a pointer forward by reference */
@@ -1160,3 +1181,40 @@ scan_leaks(void)
     }
 }
 #endif
+
+/*
+ * extend strtod() to handle Octal numbers
+ *
+ * (defined to be strtod in mawk.h)
+ */
+double strtod2(const char *str, char **endptr)
+{
+    register char *p = (char *) str;
+    double d = 0;
+    int isnegative = 0;
+    int has_sign = 0;
+    
+    while (*p != '\0' && !isdecimal(*p)) p++;
+    while (*p != '\0' && (*p == '+' || *p == '-')) {
+        if (*p == '-') isnegative = 1;
+        has_sign = 1;
+        p++;
+    }
+    /* octal ? */
+    if (*p != '\0' && *p == '0' && isoctal(*(p + 1)) ) {
+        /* octal */
+        while (*p != '\0' && isoctal(*p)) {
+            d = d * 8 + *p++ - '0';
+        }
+        if (isnegative)
+            d = -d;
+        if (endptr)
+            *endptr = p;
+        return d;
+    }
+    if (has_sign) --p;
+    /* else normal strtod */
+#undef strtod			/* make real strtod visible */
+    d = strtod(p, endptr);
+    return d;
+}
