@@ -142,7 +142,14 @@ CELL fs_shadow =
 {
     C_SPACE, 0, 0, 0.0
 };
+/* copy of split FIELDWIDTHS numbers */
+FLDWIDTHS fieldwidths_shadow =
+{
+    C_FIELDWIDTHS, 0, {0}, NULL
+};
+
 int nf;
+
  /* nf holds the true value of NF.  If nf < 0 , then
     NF has not been computed, i.e., $0 has not been split
   */
@@ -223,6 +230,9 @@ load_pfield(const char *name, CELL *cp)
 void
 field_init(void)
 {
+    SYMTAB *stp;
+    CELL *c = ZMALLOC(CELL);
+    
     allocate_fbankv(0);
 
     field[0].type = C_STRING;
@@ -247,10 +257,17 @@ field_init(void)
     OFMT->type = C_STRING;
     OFMT->ptr = (PTR) new_STRING("%.6g");
 
+    
     load_pfield("CONVFMT", CONVFMT);
     CONVFMT->type = C_STRING;
     CONVFMT->ptr = OFMT->ptr;
     string(OFMT)->ref_cnt++;
+
+    load_pfield("FIELDWIDTHS", FIELDWIDTHS);
+    FIELDWIDTHS->type = C_FIELDWIDTHS;
+    FIELDWIDTHS->ptr = (PTR) new_STRING(" ");
+    /* fieldwidths_shadow is already set */
+    init_fieldwidths_re();
 }
 
 void
@@ -260,20 +277,28 @@ set_field0(char *s, size_t len)
     nf = -1;
 
     if (len) {
-	field[0].type = C_MBSTRN;
-	field[0].ptr = (PTR) new_STRING0(len);
-	memcpy(string(&field[0])->str, s, len);
+        field[0].type = C_MBSTRN;
+        field[0].ptr = (PTR) new_STRING0(len);
+        memcpy(string(&field[0])->str, s, len);
     } else {
-	field[0].type = C_STRING;
-	field[0].ptr = (PTR) & null_str;
-	null_str.ref_cnt++;
+        field[0].type = C_STRING;
+        field[0].ptr = (PTR) & null_str;
+        null_str.ref_cnt++;
     }
 }
 
-/* split field[0] into $1, $2 ... and set NF  
+/* split field[0] into $1, $2 ... and set NF  ,
  *
  * Note the current values are valid CELLS and
  * have to be destroyed when the new values are loaded.
+ *
+ * If FIELDWIDTHS CELL is assigned a string value during
+ *  execution then
+ *  setup the fieldwidths_shadow, and set
+ *  fs_shadow.type = C_FIELDWIDTHS
+ *
+ * If FS=FS or assigned during execution, then
+ *  clear fieldwidths_shadow, and set 
 */
 
 void
@@ -281,7 +306,12 @@ split_field0(void)
 {
     CELL *cp0;
     size_t cnt = 0;
-    CELL hold0;			/* copy field[0] here if not string */
+    CELL hold0;	    	/* copy field[0] here if not string */
+    int i = 0;          /* nr converted from  FIELDWIDTHS str */
+    int *pi;            /* fieldwidths_shadow.flds[]  */
+    register const char *p;
+    SYMTAB *stp;
+    CELL *fw;
 
     if (field[0].type < C_STRING) {
 	cast1_to_s(cellcpy(&hold0, field + 0));
@@ -291,20 +321,23 @@ split_field0(void)
     }
 
     if (string(cp0)->len > 0) {
-	switch (fs_shadow.type) {
-	case C_SNULL:		/* FS == "" */
-	    cnt = null_split(string(cp0)->str, string(cp0)->len);
-	    break;
+    switch (fs_shadow.type) {
+    case C_SNULL:		/* FS == "" */
+        cnt = null_split(string(cp0)->str, string(cp0)->len);
+        break;
 
-	case C_SPACE:
-	    cnt = space_split(string(cp0)->str, string(cp0)->len);
-	    break;
+    case C_SPACE:
+        cnt = space_split(string(cp0)->str, string(cp0)->len);
+        break;
 
-	default:
-	    cnt = re_split(string(cp0)->str, string(cp0)->len, fs_shadow.ptr);
-	    break;
-	}
-
+    case C_FIELDWIDTHS:
+        cnt = fieldwidths_split(string(cp0)->str, string(cp0)->len, &fieldwidths_shadow);
+        break;
+        
+    default:
+        cnt = re_split(string(cp0)->str, string(cp0)->len, fs_shadow.ptr);
+        break;
+    }
     }
     /* the above xxx_split() function put the fields in an anonyous
      * buffer that will be pulled into the fields with a transer call */
@@ -320,12 +353,12 @@ split_field0(void)
     NF->dval = (double) nf;
 
     if (nf > max_field)
-	slow_field_ptr(nf);
+        slow_field_ptr(nf);
     /* fields 1 .. nf are created and valid */
 
     /* retrieves the result of xxx_split() */
     if (cnt > 0) {
-	transfer_to_fields(cnt);
+        transfer_to_fields(cnt);
     }
 }
 
@@ -339,83 +372,137 @@ field_assign(CELL *fp, CELL *cp)
 {
     CELL c;
     int i, j;
+    char *p;
+    STRING * q;
+    int *pi;
 
     /* the most common case first */
     if (fp == field) {
-	cell_destroy(field);
-	cellcpy(fp, cp);
-	nf = -1;
-	return;
+        cell_destroy(field);
+        cellcpy(fp, cp);
+        nf = -1;
+        return;
     }
 
     /* its not important to do any of this fast */
 
     if (nf < 0)
-	split_field0();
+        split_field0();
 
     switch (i = (int) (fp - field)) {
 
     case NF_field:
 
-	cell_destroy(NF);
-	cellcpy(NF, cellcpy(&c, cp));
-	if (c.type != C_DOUBLE)
-	    cast1_to_d(&c);
+        cell_destroy(NF);
+        cellcpy(NF, cellcpy(&c, cp));
+        if (c.type != C_DOUBLE)
+            cast1_to_d(&c);
 
-	if ((j = d_to_i(c.dval)) < 0)
-	    rt_error("negative value assigned to NF");
+        if ((j = d_to_i(c.dval)) < 0)
+            rt_error("negative value assigned to NF");
 
-	if (j > nf)
-	    for (i = nf + 1; i <= j; i++) {
-		cp = field_ptr(i);
-		cell_destroy(cp);
-		cp->type = C_STRING;
-		cp->ptr = (PTR) & null_str;
-		null_str.ref_cnt++;
-	    }
+        if (j > nf)
+            for (i = nf + 1; i <= j; i++) {
+            cp = field_ptr(i);
+            cell_destroy(cp);
+            cp->type = C_STRING;
+            cp->ptr = (PTR) & null_str;
+            null_str.ref_cnt++;
+            }
 
-	nf = j;
-	build_field0();
-	break;
+        nf = j;
+        build_field0();
+        break;
 
     case RS_field:
-	cell_destroy(RS);
-	cellcpy(RS, cp);
-	set_rs_shadow();
-	break;
+        cell_destroy(RS);
+        cellcpy(RS, cp);
+        set_rs_shadow();
+        break;
 
     case FS_field:
-	cell_destroy(FS);
-	cast_for_split(cellcpy(&fs_shadow, cellcpy(FS, cp)));
-	break;
+        cell_destroy(FS);
+        cast_for_split(cellcpy(&fs_shadow, cellcpy(FS, cp)));
+        /* FS=FS -> need to determine what previous type is */
+        if (cp->type = C_FIELDWIDTHS) {
+            if (cp->ptr == (PTR) 0 || strcmp(char_ptr(cp), "") == 0) {
+                fs_shadow.type = C_SNULL;
+            } else if (strcmp(char_ptr(cp), " ") == 0) {
+                fs_shadow.type = C_SPACE;
+            } else {
+                fs_shadow.type = C_RE;
+            }
+        }
+        //fieldwidths_shadow.nf = 0;   /* disable FIELDWIDTHS */
+        nf = -1;
+        break;
 
+    case FW_field:
+        cell_destroy(FIELDWIDTHS);
+        cellcpy(FIELDWIDTHS, cp);
+        if (string(cp)->len == 0) {
+            fieldwidths_shadow.nf = 0;
+        } else {
+            /* set up fieldwidths_shadow with the width numbers if first time */
+            p = char_ptr(cp);
+            fieldwidths_shadow.fldstr = new_STRING1(p, strlen(p));
+            /* need a copy for strtok, because it changes the string in place */
+            q = new_STRING1(fieldwidths_shadow.fldstr->str, fieldwidths_shadow.fldstr->len);
+            p = strtok(q->str, " ");
+            pi = fieldwidths_shadow.flds;
+            while (p) {
+                i = 0;
+                while (*p) {
+                  if (isdecimal(*p)) {
+                      i = i * 10 + (*p - '0');
+                  } else {
+                      free_STRING(q);
+                      errmsg(0, "FIELDWIDTHS must contain space-separated numbers: %s", fieldwidths_shadow.fldstr->str);
+                      mawk_exit(2);
+                  }
+                  p++;
+                }
+                *pi++ = i;
+                p = strtok(NULL, " ");
+                if (!p) {
+                    *pi = 0;
+                    fieldwidths_shadow.nf = (pi - fieldwidths_shadow.flds) + 1;
+                    break;
+                }
+            }
+            free_STRING(q);
+        }
+        fs_shadow.type = C_FIELDWIDTHS;  /* redirect splitting to fieldwidths_split */
+        nf = -1;
+        break;
+    
     case OFMT_field:
     case CONVFMT_field:
-	/* If the user does something stupid with OFMT or CONVFMT,
-	   we could crash.
-	   We'll make an attempt to protect ourselves here.  This is
-	   why OFMT and CONVFMT are pseudo fields.
+        /* If the user does something stupid with OFMT or CONVFMT,
+           we could crash.
+           We'll make an attempt to protect ourselves here.  This is
+           why OFMT and CONVFMT are pseudo fields.
 
-	   The ptrs of OFMT and CONVFMT always have a valid STRING,
-	   even if assigned a DOUBLE or NOINIT
-	 */
+           The ptrs of OFMT and CONVFMT always have a valid STRING,
+           even if assigned a DOUBLE or NOINIT
+         */
 
-	free_STRING(string(fp));
-	cellcpy(fp, cp);
-	if (fp->type < C_STRING)	/* !! */
-	    fp->ptr = (PTR) new_STRING("%.6g");
-	else if (fp == CONVFMT) {
-	    /* It's a string, but if it's really goofy and CONVFMT,
-	       it could still damage us. Test it .
-	     */
-	    char xbuff[512];
+        free_STRING(string(fp));
+        cellcpy(fp, cp);
+        if (fp->type < C_STRING)	/* !! */
+            fp->ptr = (PTR) new_STRING("%.6g");
+        else if (fp == CONVFMT) {
+            /* It's a string, but if it's really goofy and CONVFMT,
+               it could still damage us. Test it .
+             */
+            char xbuff[512];
 
-	    xbuff[256] = 0;
-	    sprintf(xbuff, string(fp)->str, 3.1459);
-	    if (xbuff[256])
-		rt_error("CONVFMT assigned unusable value");
-	}
-	break;
+            xbuff[256] = 0;
+            sprintf(xbuff, string(fp)->str, 3.1459);
+            if (xbuff[256])
+            rt_error("CONVFMT assigned unusable value");
+        }
+        break;
 
 #ifdef MSDOS
       lm_dos_label:
@@ -423,31 +510,31 @@ field_assign(CELL *fp, CELL *cp)
 
     default:			/* $1 or $2 or ... */
 
-	cell_destroy(fp);
-	cellcpy(fp, cp);
+        cell_destroy(fp);
+        cellcpy(fp, cp);
 
-	if (i < 0 || i >= FBANK_SZ) {
-	    /* field assigned to was not in field[0..FBANK_SZ-1]
-	     * or a pseudo field, so compute actual field index
-	     */
-	    i = field_addr_to_index(fp);
-	}
+        if (i < 0 || i >= FBANK_SZ) {
+            /* field assigned to was not in field[0..FBANK_SZ-1]
+             * or a pseudo field, so compute actual field index
+             */
+            i = field_addr_to_index(fp);
+        }
 
-	if (i > nf) {
-	    for (j = nf + 1; j < i; j++) {
-		cp = field_ptr(j);
-		cell_destroy(cp);
-		cp->type = C_STRING;
-		cp->ptr = (PTR) & null_str;
-		null_str.ref_cnt++;
-	    }
-	    nf = i;
-	    cell_destroy(NF);
-	    NF->type = C_DOUBLE;
-	    NF->dval = (double) i;
-	}
+        if (i > nf) {
+            for (j = nf + 1; j < i; j++) {
+            cp = field_ptr(j);
+            cell_destroy(cp);
+            cp->type = C_STRING;
+            cp->ptr = (PTR) & null_str;
+            null_str.ref_cnt++;
+            }
+            nf = i;
+            cell_destroy(NF);
+            NF->type = C_DOUBLE;
+            NF->dval = (double) i;
+        }
 
-	build_field0();
+        build_field0();
 
     }
 }
@@ -466,96 +553,96 @@ build_field0(void)
     cell_destroy(field + 0);
 
     if (nf == 0) {
-	field[0].type = C_STRING;
-	field[0].ptr = (PTR) & null_str;
-	null_str.ref_cnt++;
+        field[0].type = C_STRING;
+        field[0].ptr = (PTR) & null_str;
+        null_str.ref_cnt++;
     } else if (nf == 1) {
-	cellcpy(field, field + 1);
+        cellcpy(field, field + 1);
     } else {
-	CELL c;
-	STRING *ofs, *tail;
-	size_t len;
-	register CELL *cp;
-	register char *p, *q;
-	int cnt;
-	CELL **fbp, *cp_limit;
+        CELL c;
+        STRING *ofs, *tail;
+        size_t len;
+        register CELL *cp;
+        register char *p, *q;
+        int cnt;
+        CELL **fbp, *cp_limit;
 
-	cast1_to_s(cellcpy(&c, OFS));
-	ofs = (STRING *) c.ptr;
-	cast1_to_s(cellcpy(&c, field_ptr(nf)));
-	tail = (STRING *) c.ptr;
-	cnt = nf - 1;
+        cast1_to_s(cellcpy(&c, OFS));
+        ofs = (STRING *) c.ptr;
+        cast1_to_s(cellcpy(&c, field_ptr(nf)));
+        tail = (STRING *) c.ptr;
+        cnt = nf - 1;
 
-	len = ((size_t) cnt) * ofs->len + tail->len;
+        len = ((size_t) cnt) * ofs->len + tail->len;
 
-	fbp = fbankv;
-	cp_limit = field + FBANK_SZ;
-	cp = field + 1;
+        fbp = fbankv;
+        cp_limit = field + FBANK_SZ;
+        cp = field + 1;
 
-	while (cnt-- > 0) {
-	    if (cp->type < C_STRING) {	/* use the string field temporarily */
-		if (cp->type == C_NOINIT) {
-		    cp->ptr = (PTR) & null_str;
-		    null_str.ref_cnt++;
-		} else {	/* its a double */
-		    Int ival;
-		    char xbuff[260];
+        while (cnt-- > 0) {
+            if (cp->type < C_STRING) {	/* use the string field temporarily */
+            if (cp->type == C_NOINIT) {
+                cp->ptr = (PTR) & null_str;
+                null_str.ref_cnt++;
+            } else {	/* its a double */
+                Int ival;
+                char xbuff[260];
 
-		    ival = d_to_I(cp->dval);
-		    if (ival == cp->dval)
-			sprintf(xbuff, INT_FMT, ival);
-		    else
-			sprintf(xbuff, string(CONVFMT)->str, cp->dval);
+                ival = d_to_I(cp->dval);
+                if (ival == cp->dval)
+                sprintf(xbuff, INT_FMT, ival);
+                else
+                sprintf(xbuff, string(CONVFMT)->str, cp->dval);
 
-		    cp->ptr = (PTR) new_STRING(xbuff);
-		}
-	    }
+                cp->ptr = (PTR) new_STRING(xbuff);
+            }
+            }
 
-	    len += string(cp)->len;
+            len += string(cp)->len;
 
-	    if (++cp == cp_limit) {
-		cp = *++fbp;
-		cp_limit = cp + FBANK_SZ;
-	    }
+            if (++cp == cp_limit) {
+            cp = *++fbp;
+            cp_limit = cp + FBANK_SZ;
+            }
 
-	}
+        }
 
-	field[0].type = C_STRING;
-	field[0].ptr = (PTR) new_STRING0(len);
+        field[0].type = C_STRING;
+        field[0].ptr = (PTR) new_STRING0(len);
 
-	p = string(field)->str;
+        p = string(field)->str;
 
-	/* walk it again , putting things together */
-	cnt = nf - 1;
-	fbp = fbankv;
-	cp = field + 1;
-	cp_limit = field + FBANK_SZ;
-	while (cnt-- > 0) {
-	    memcpy(p, string(cp)->str, string(cp)->len);
-	    p += string(cp)->len;
-	    /* if not really string, free temp use of ptr */
-	    if (cp->type < C_STRING) {
-		free_STRING(string(cp));
-	    }
-	    if (++cp == cp_limit) {
-		cp = *++fbp;
-		cp_limit = cp + FBANK_SZ;
-	    }
-	    /* add the separator */
-	    q = ofs->str;
-	    while (*q)
-		*p++ = *q++;
-	}
-	/* tack tail on the end */
-	memcpy(p, tail->str, tail->len);
+        /* walk it again , putting things together */
+        cnt = nf - 1;
+        fbp = fbankv;
+        cp = field + 1;
+        cp_limit = field + FBANK_SZ;
+        while (cnt-- > 0) {
+            memcpy(p, string(cp)->str, string(cp)->len);
+            p += string(cp)->len;
+            /* if not really string, free temp use of ptr */
+            if (cp->type < C_STRING) {
+            free_STRING(string(cp));
+            }
+            if (++cp == cp_limit) {
+            cp = *++fbp;
+            cp_limit = cp + FBANK_SZ;
+            }
+            /* add the separator */
+            q = ofs->str;
+            while (*q)
+            *p++ = *q++;
+        }
+        /* tack tail on the end */
+        memcpy(p, tail->str, tail->len);
 
-	/* cleanup */
-	if (tail == ofs) {
-	    free_STRING(tail);
-	} else {
-	    free_STRING(tail);
-	    free_STRING(ofs);
-	}
+        /* cleanup */
+        if (tail == ofs) {
+            free_STRING(tail);
+        } else {
+            free_STRING(tail);
+            free_STRING(ofs);
+        }
     }
 }
 
@@ -566,25 +653,25 @@ void
 slow_cell_assign(CELL *target, CELL *source)
 {
     if (field <= target && target <= LAST_PFIELD) {
-	field_assign(target, source);
+        field_assign(target, source);
     } else {
-	size_t i;
-	for (i = 1; i < fbankv_num_chunks * FBANKV_CHUNK_SIZE; i++) {
-	    CELL *bank_start = fbankv[i];
-	    CELL *bank_end = bank_start + FBANK_SZ;
+        size_t i;
+        for (i = 1; i < fbankv_num_chunks * FBANKV_CHUNK_SIZE; i++) {
+            CELL *bank_start = fbankv[i];
+            CELL *bank_end = bank_start + FBANK_SZ;
 
-	    if (bank_start == 0)
-		break;
+            if (bank_start == 0)
+            break;
 
-	    if (bank_start <= target && target < bank_end) {
-		/* it is a field */
-		field_assign(target, source);
-		return;
-	    }
-	}
-	/* its not a field */
-	cell_destroy(target);
-	cellcpy(target, source);
+            if (bank_start <= target && target < bank_end) {
+            /* it is a field */
+            field_assign(target, source);
+            return;
+            }
+        }
+        /* its not a field */
+        cell_destroy(target);
+        cellcpy(target, source);
     }
 }
 
@@ -613,20 +700,20 @@ slow_field_ptr(int i)
 {
 
     if (i > max_field) {	/* need to allocate more field memory */
-	int j;
-	allocate_fbankv(i);
+        int j;
+        allocate_fbankv(i);
 
-	j = (max_field >> FB_SHIFT) + 1;
+        j = (max_field >> FB_SHIFT) + 1;
 
-	assert(j > 0 && fbankv[j - 1] != 0 && fbankv[j] == 0);
+        assert(j > 0 && fbankv[j - 1] != 0 && fbankv[j] == 0);
 
-	do {
-	    fbankv[j] = (CELL *) zmalloc(sizeof(CELL) * FBANK_SZ);
-	    memset(fbankv[j], 0, sizeof(CELL) * FBANK_SZ);
-	    j++;
-	    max_field += FBANK_SZ;
-	}
-	while (i > max_field);
+        do {
+            fbankv[j] = (CELL *) zmalloc(sizeof(CELL) * FBANK_SZ);
+            memset(fbankv[j], 0, sizeof(CELL) * FBANK_SZ);
+            j++;
+            max_field += FBANK_SZ;
+        }
+        while (i > max_field);
     }
 
     return &fbankv[i >> FB_SHIFT][i & (FBANK_SZ - 1)];

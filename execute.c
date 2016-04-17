@@ -800,6 +800,7 @@ execute(INST * cdp,		/* code ptr, start execution here */
 	    case C_DOUBLE:
 		sp->dval = sp->dval != 0.0 ? 0.0 : 1.0;
 		break;
+	    case C_FIELDWIDTHS:
 	    case C_STRING:
 		sp->dval = string(sp)->len ? 0.0 : 1.0;
 		free_STRING(string(sp));
@@ -827,6 +828,7 @@ execute(INST * cdp,		/* code ptr, start execution here */
 	    case C_DOUBLE:
 		sp->dval = sp->dval != 0.0 ? 1.0 : 0.0;
 		break;
+	    case C_FIELDWIDTHS:
 	    case C_STRING:
 		sp->dval = string(sp)->len ? 1.0 : 0.0;
 		free_STRING(string(sp));
@@ -1380,6 +1382,7 @@ test(CELL *cp)
     case C_STRNUM:		/* test as a number */
     case C_DOUBLE:
 	return cp->dval != 0.0;
+    case C_FIELDWIDTHS:
     case C_STRING:
 	return (string(cp)->len != 0);
     case C_MBSTRN:
@@ -1484,6 +1487,7 @@ cellcpy(CELL *target, CELL *source)
 	target->dval = source->dval;
 	/* fall thru */
 
+    case C_FIELDWIDTHS:
     case C_REPL:
     case C_MBSTRN:
     case C_STRING:

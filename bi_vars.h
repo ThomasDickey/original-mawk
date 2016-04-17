@@ -37,15 +37,15 @@ the GNU General Public License, version 2, 1991.
 */
 
 /* NR and FNR must be next to each other */
-#define  NR	   bi_vars
-#define  FNR	   (bi_vars+1)
-#define  ARGC      (bi_vars+2)
-#define  FILENAME  (bi_vars+3)
-#define  OFS       (bi_vars+4)
-#define  ORS       (bi_vars+5)
-#define  RLENGTH   (bi_vars+6)
-#define  RSTART    (bi_vars+7)
-#define  SUBSEP    (bi_vars+8)
+#define  NR	             bi_vars
+#define  FNR	        (bi_vars+1)
+#define  ARGC           (bi_vars+2)
+#define  FILENAME       (bi_vars+3)
+#define  OFS            (bi_vars+4)
+#define  ORS            (bi_vars+5)
+#define  RLENGTH        (bi_vars+6)
+#define  RSTART         (bi_vars+7)
+#define  SUBSEP         (bi_vars+8)
 
 #if USE_BINMODE
 #define  BINMODE   (bi_vars+9)

@@ -43,6 +43,8 @@ CPPFLAGS	= -I. -I$(srcdir) -DHAVE_CONFIG_H  -DLOCAL_REGEXP -D_GNU_SOURCE -D_FILE
 EXTRA_CFLAGS	= 
 CFLAGS          = -O2 -DHAVE_C99_FUNCS $(EXTRA_CFLAGS)
 LDFLAGS         = -O2 
+#CFLAGS          = -pg -O0 -DHAVE_C99_FUNCS $(EXTRA_CFLAGS)
+#LDFLAGS         = -pg -O0 
 LIBS            = -lm 
 
 BUILD_CFLAGS	= ${CFLAGS}

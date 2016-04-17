@@ -67,6 +67,11 @@ TraceCell(CELL *cp)
 	case C_RE:
 	    TRACE(("a regular expression at %p: %s\n", cp->ptr, re_uncompile(cp->ptr)));
 	    break;
+        case C_FIELDWIDTHS:
+	    TRACE(("split on fixed field widths: "));
+	    TraceString(char_ptr(&fldwidths_shadow));
+	    TRACE(("\n"));
+	    break;
 	case C_REPL:
 	    TRACE(("a replacement string at %p: ", cp->ptr));
 	    TraceString(string(cp));

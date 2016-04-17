@@ -151,6 +151,7 @@ extern unsigned rt_nr, rt_fnr;	/* ditto */
 
 /* macro to get at the string part of a CELL */
 #define string(cp) ((STRING *)(cp)->ptr)
+#define char_ptr(cp) ((char *)(string(cp)->str))
 
 #ifdef   DEBUG
 #define cell_destroy(cp)  DB_cell_destroy(cp)

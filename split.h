@@ -19,9 +19,13 @@ the GNU General Public License, version 2, 1991.
 #ifndef  SCAN_H
 #define  SCAN_H
 
+#include "field.h"
+
+extern void init_fieldwidths_re(void);
 extern size_t null_split(const char *s, size_t slen);
 extern size_t re_split(char *s, size_t slen, PTR re);
 extern size_t space_split(const char *s, size_t slen);
+extern size_t fieldwidths_split(const char *s, size_t slen, FLDWIDTHS * flds);
 extern void transfer_to_array(CELL cp[], size_t cnt);
 extern void transfer_to_fields(size_t);
 

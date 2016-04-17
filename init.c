@@ -161,6 +161,7 @@ bad_option(char *s)
     if (strcmp(s, "--lint") &&
 	strcmp(s, "--lint-old") &&
 	strcmp(s, "--posix") &&
+	strcmp(s, "--re-interval") &&
 	strcmp(s, "--traditional")) {
 	mawk_exit(2);
     }

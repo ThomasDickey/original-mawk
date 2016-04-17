@@ -202,7 +202,7 @@ fi
 
 Begin "testing arrays and flow of control"
 
-LC_ALL=C $PROG -f wfrq0.awk $dat | cmp -s - wfrq-awk.out || Fail
+LC_ALL=C $PROG -f wfrq0.awk $dat | cmp -s - wfrq-awk.out || Fail "wfrq-awk"
 
 Finish "array test"
 
@@ -210,7 +210,7 @@ Finish "array test"
 
 Begin "testing nextfile"
 
-LC_ALL=C $PROG -f nextfile.awk full-awk.dat $dat | cmp -s - nextfile.out || Fail
+LC_ALL=C $PROG -f nextfile.awk full-awk.dat $dat | cmp -s - nextfile.out || Fail "nextfile.awk"
 
 Finish "nextfile test"
 
@@ -218,7 +218,7 @@ Finish "nextfile test"
 
 Begin "testing function calls and general stress test"
 
-LC_ALL=C $PROG -f $SRC/examples/decl.awk $dat | cmp -s - decl-awk.out || Fail
+LC_ALL=C $PROG -f $SRC/examples/decl.awk $dat | cmp -s - decl-awk.out || Fail "examples/decl.awk"
 
 Finish "general stress test"
 
@@ -226,7 +226,9 @@ Finish "general stress test"
 
 Begin "testing r{n,m} repetitions"
 
-LC_ALL=C $PROG -Wre -f repetitions.awk repetitions.dat | cmp -s - repetitions.out || Fail
+LC_ALL=C $PROG -Wre -f repetitions.awk repetitions.dat | cmp -s - repetitions.out || Fail "repetitions.awk"
+
+Finish "repetitions test"
 
 #################################
 
@@ -234,7 +236,17 @@ Begin "testing hex and octal numbers"
 
 LC_ALL=C $PROG -f hexoct.awk > $STDOUT
 LC_ALL=C $PROG '{printf "%d %x %o\n", $1,$1,$1}' hexoct.dat >> $STDOUT
-cmp -s $STDOUT hexoct.out || Fail
+cmp -s $STDOUT hexoct.out || Fail "hexoct.awk"
+
+Finish "hex and octal numbers test"
+
+#################################
+
+Begin "testing fixed-width fields"
+
+LC_ALL=C $PROG -f fw.awk fw.dat | cmp -s - fw.out || Fail "fw.awk"
+
+Finish "fixed-width fields test"
 
 #################################
 

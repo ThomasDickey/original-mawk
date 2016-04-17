@@ -17,6 +17,11 @@ Changes by jlp765 <jlp765@gmail.com>
           add printf output change for %d, %i, and %u to %.0f when the 
           number being printed is greater than Max_Int
           add man page updates to man/mawk.1
+          add ability to read hex and octal numbers, allow negative numbers 
+          to be cast to UInt values (2's complement) and print "%u, %x, %o"
+          (were previously zero values)
+          add FIELDWIDTHS variable and splitting input on fixed widths, 
+          can switch back to non-fixed by setting FS=FS.
 
 Changes by Thomas E Dickey <dickey@invisible-island.net>
 

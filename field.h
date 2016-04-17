@@ -35,6 +35,8 @@ the GNU General Public License, version 2, 1991.
 #include "nstd.h"
 #include "types.h"
 
+# define FLDWIDTHS_SZ     1024   /* Nr width specifiers */
+
 extern void set_field0(char *, size_t);
 extern void split_field0(void);
 extern void field_assign(CELL *, CELL *);
@@ -44,9 +46,9 @@ extern CELL *slow_field_ptr(int);
 extern int field_addr_to_index(CELL *);
 extern void set_binmode(int);
 
-#define  NUM_PFIELDS		5
+#define  NUM_PFIELDS		6
 extern CELL field[FBANK_SZ + NUM_PFIELDS];
-	/* $0, $1 ... $(FBANK_SZ-1), NF, RS, RS, CONVFMT, OFMT */
+	/* $0, $1 ... $(FBANK_SZ-1), NF, RS, RS, CONVFMT, FIELDWIDTHS, OFMT */
 
 /* more fields if needed go here */
 extern CELL **fbankv;		/* fbankv[0] == field */
@@ -60,21 +62,24 @@ extern CELL **fbankv;		/* fbankv[0] == field */
 #undef FS
 #undef CONVFMT
 #undef OFMT
+#undef FIELDWIDTHS
 
 /* some compilers choke on (NF-field) in a case statement
    even though it's constant so ...
 */
-#define  NF_field      FBANK_SZ
-#define  RS_field      (FBANK_SZ + 1)
-#define  FS_field      (FBANK_SZ + 2)
-#define  CONVFMT_field (FBANK_SZ + 3)
-#define  OFMT_field    (FBANK_SZ + 4)
+#define  NF_field            FBANK_SZ
+#define  RS_field           (FBANK_SZ + 1)
+#define  FS_field           (FBANK_SZ + 2)
+#define  CONVFMT_field      (FBANK_SZ + 3)
+#define  FW_field           (FBANK_SZ + 4)
+#define  OFMT_field         (FBANK_SZ + 5)
 
 /* the pseudo fields, assignment has side effects */
 #define  NF            (field + NF_field)	/* must be first */
 #define  RS            (field + RS_field)
 #define  FS            (field + FS_field)
 #define  CONVFMT       (field + CONVFMT_field)
+#define  FIELDWIDTHS   (field + FW_field)
 #define  OFMT          (field + OFMT_field)	/* must be last */
 
 #define  LAST_PFIELD	OFMT
@@ -86,7 +91,7 @@ extern int nf;			/* shadows NF */
 #define  SEP_CHAR       1
 #define  SEP_STR        2
 #define  SEP_RE         3
-#define  SEP_MLR	4
+#define  SEP_MLR	    4
 
 typedef struct {
     char type;
@@ -94,8 +99,17 @@ typedef struct {
     PTR ptr;			/* STRING* or RE machine* */
 } SEPARATOR;
 
+
+typedef struct {
+    char type;
+    int nf;                     /* nr of fixed fields  */
+    int flds[FLDWIDTHS_SZ];    /* width numbers from fldstr */
+    STRING *fldstr;		        /* FIELDWIDTHS string */
+} FLDWIDTHS;
+
 extern SEPARATOR rs_shadow;
 extern CELL fs_shadow;
+extern FLDWIDTHS fieldwidths_shadow;
 
 /*  types for splitting overflow */
 

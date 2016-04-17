@@ -273,6 +273,7 @@ free_cell_data(CELL *cp)
 	repl_destroy(cp);
 	zfree(cp, sizeof(CELL));
 	break;
+    case C_FIELDWIDTHS:
     case C_MBSTRN:
     case C_STRING:
     case C_STRNUM:

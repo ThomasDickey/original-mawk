@@ -83,6 +83,7 @@ cast1_to_d(CELL *cp)
     case C_DOUBLE:
 	return;
 
+    case C_FIELDWIDTHS:
     case C_MBSTRN:
     case C_STRING:
 	{
@@ -127,6 +128,7 @@ cast2_to_d(CELL *cp)
 	free_STRING(string(cp));
 	break;
 
+    case C_FIELDWIDTHS:
     case C_MBSTRN:
     case C_STRING:
 	s = (STRING *) cp->ptr;
@@ -161,6 +163,7 @@ cast2_to_d(CELL *cp)
 	free_STRING(string(cp));
 	break;
 
+    case C_FIELDWIDTHS:
     case C_MBSTRN:
     case C_STRING:
 	s = (STRING *) cp->ptr;
@@ -208,6 +211,7 @@ cast1_to_s(CELL *cp)
     case C_STRING:
 	return;
 
+    case C_FIELDWIDTHS:
     case C_MBSTRN:
     case C_STRNUM:
 	break;
@@ -244,6 +248,7 @@ cast2_to_s(CELL *cp)
     case C_STRING:
 	goto two;
 
+    case C_FIELDWIDTHS:
     case C_MBSTRN:
     case C_STRNUM:
 	break;
@@ -276,6 +281,7 @@ cast2_to_s(CELL *cp)
     case C_STRING:
 	return;
 
+    case C_FIELDWIDTHS:
     case C_MBSTRN:
     case C_STRNUM:
 	break;

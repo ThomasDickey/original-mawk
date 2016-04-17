@@ -29,12 +29,16 @@ the GNU General Public License, version 2, 1991.
 #include "regexp.h"
 #include "repl.h"
 #include "field.h"
+#include "zmalloc.h"
+
 
 #ifdef NO_LEAKS
 #define SP_SIZE    4		/* exercises split_block_list code */
 #else
 #define SP_SIZE  2048
 #endif
+
+#define FW_SPLIT_STR  "~!"
 
 typedef struct split_block {
     STRING *strings[SP_SIZE];
@@ -43,6 +47,19 @@ typedef struct split_block {
 
 static Split_Block_Node split_block_base;
 static Split_Block_Node *split_block_list = &split_block_base;
+
+/* initialise for fieldwidth splitting */
+STRING *fieldwidths_restr;
+
+CELL fldwidths_re = {C_STRING, 0, NULL, 0.0};
+CELL *fieldwidths_re = &fldwidths_re;
+
+void
+init_fieldwidths_re(void)
+{
+    fieldwidths_re->ptr = new_STRING(FW_SPLIT_STR);
+    cast_for_split(fieldwidths_re);
+}
 
 /* usually the list is of size 1
    the list never gets smaller than size 1
@@ -103,14 +120,17 @@ space_split(const char *s, size_t slen)
 	    node_p->strings[idx] = new_STRING1(q, (size_t) (s - q));
 	    cnt++;
 	    if (++idx == SP_SIZE) {
-		idx = 0;
-		node_p = grow_sp_list(node_p);
+            idx = 0;
+            node_p = grow_sp_list(node_p);
 	    }
 	}
     }
     /* not reached */
 }
 
+/*
+ * re is an (RE_DATA *) with compiled PTR holding the compiled RE
+ */
 size_t
 re_split(char *s, size_t slen, PTR re)
 {
@@ -131,8 +151,8 @@ re_split(char *s, size_t slen, PTR re)
 	    node_p->strings[idx] = new_STRING1(s, (size_t) (m - s));
 	    cnt++;
 	    if (++idx == SP_SIZE) {
-		idx = 0;
-		node_p = grow_sp_list(node_p);
+            idx = 0;
+            node_p = grow_sp_list(node_p);
 	    }
 	    s = m + mlen;
 	    no_bol = 1;
@@ -146,6 +166,67 @@ re_split(char *s, size_t slen, PTR re)
     /* last match at end of s, so last field is "" */
     node_p->strings[idx] = new_STRING0(0);
     return ++cnt;
+}
+
+/*
+ * stretch a string to add SUBSEP at the FIELDWIDTHS locations
+ * then split using re_split
+ */
+size_t
+fieldwidths_split(const char *s, size_t slen, FLDWIDTHS * flds)
+{
+    size_t cnt = 0;
+    int *pwidth = flds->flds;   /* width of each field */
+    int  newlen = slen + (flds->fldstr->len);
+    /* new string to hold s with inserted FW_SPLIT_STR chars */
+    STRING *str = new_STRING0(newlen + 1);
+    char *newstr = str->str;
+    register char *p = newstr;
+    const char *ends = s + slen;
+    CELL oldfs, oldfs_shadow;
+    
+    newstr[newlen] = 0;
+    /* insert special chars into newstr, for re_split */
+    while (1) {
+        if (slen < *pwidth) {
+            memcpy(p, s, slen);
+            p += slen;
+            break;
+        }
+        memcpy(p, s, *pwidth);
+        p += *pwidth;
+        slen -= *pwidth;
+        s += *pwidth++;
+        if (*pwidth == 0 || s >= ends) break;
+        /* only add delimiters when not end of string */
+        *p++ = FW_SPLIT_STR[0];
+        *p++ = FW_SPLIT_STR[1];
+    }
+    *p = 0;
+
+    //oldfs.type = FS->type;
+    oldfs.ptr  = FS->ptr;
+    oldfs_shadow.type = fs_shadow.type;
+    oldfs_shadow.ptr  = fs_shadow.ptr;
+    
+	//cell_destroy(FS);
+	//cell_destroy(&fs_shadow);
+    
+    FS->type = C_STRING;
+    FS->ptr = new_STRING(FW_SPLIT_STR);
+	cast_for_split(cellcpy(&fs_shadow, FS));
+
+    cnt = re_split(newstr, (p - newstr), fs_shadow.ptr);
+    
+    free_STRING((STRING *) FS->ptr);
+	cell_destroy(&fs_shadow);
+    FS->type = C_FIELDWIDTHS;    //oldfs.type;
+    FS->ptr  = oldfs.ptr;
+    fs_shadow.type = oldfs_shadow.type;
+    fs_shadow.ptr  = oldfs_shadow.ptr;
+    
+    free_STRING(str);
+    return cnt;
 }
 
 /* match a string with a regular expression, but
@@ -192,11 +273,11 @@ null_split(const char *s, size_t slen)
     unsigned idx = 0;
 
     while (s < end) {
-	node_p->strings[idx] = new_STRING1(s++, 1);
-	if (++idx == SP_SIZE) {
-	    idx = 0;
-	    node_p = grow_sp_list(node_p);
-	}
+        node_p->strings[idx] = new_STRING1(s++, 1);
+        if (++idx == SP_SIZE) {
+            idx = 0;
+            node_p = grow_sp_list(node_p);
+        }
     }
     return slen;
 }
@@ -214,14 +295,14 @@ transfer_to_array(CELL cp[], size_t cnt)
     Split_Block_Node *node_p = split_block_list;
     unsigned idx = 0;
     while (cnt > 0) {
-	cp->type = C_MBSTRN;
-	cp->ptr = (PTR) node_p->strings[idx];
-	cnt--;
-	cp++;
-	if (++idx == SP_SIZE) {
-	    idx = 0;
-	    node_p = node_p->link;
-	}
+        cp->type = C_MBSTRN;
+        cp->ptr = (PTR) node_p->strings[idx];
+        cnt--;
+        cp++;
+        if (++idx == SP_SIZE) {
+            idx = 0;
+            node_p = node_p->link;
+        }
     }
     if (node_p != split_block_list)
 	spb_list_shrink();

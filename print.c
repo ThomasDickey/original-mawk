@@ -90,6 +90,7 @@ print_cell(CELL *p, FILE *fp)
     switch (p->type) {
     case C_NOINIT:
     break;
+    case C_FIELDWIDTHS:
     case C_MBSTRN:
     case C_STRING:
     case C_STRNUM:
@@ -592,6 +593,8 @@ do_printf(
         //Ival = string(cp)->str[0];
         //break;
         /* fall thru */
+
+        case C_FIELDWIDTHS:
         case C_MBSTRN:
         check_strnum(cp);
         Ival = ((cp->type == C_STRING)
