@@ -132,6 +132,13 @@ BI_REC bi_funct[] =
 #ifdef HAVE_STRFTIME
    { "strftime", bi_strftime, 0, 3 },
 #endif
+   { "compl",    bi_compl,    1, 1 },
+   { "lshift",   bi_lshift,   2, 2 },
+   { "rshift",   bi_rshift,   2, 2 },
+   { "xor",      bi_xor,      2, 2 },
+   { "or",       bi_or,       2, 2 },
+   { "and",      bi_and,      2, 2 },
+
 #ifdef HAVE_C99_FUNCS
    { "tan",         bi_tan,        1, 1 },
    { "acos",        bi_acos,       1, 1 },
@@ -169,7 +176,7 @@ BI_REC bi_funct[] =
 #ifdef _GNU_SOURCE
    { "bessel_j0",   bi_bessel_j0,  1, 1 },
    { "bessel_j1",   bi_bessel_j1,  1, 1 },
-   { "bessel_jn",   bi_bessel_jn,  1, 2 },
+   { "bessel_jn",   bi_bessel_jn,  2, 2 },
    { "bessel_y0",   bi_bessel_y0,  1, 1 },
    { "bessel_y1",   bi_bessel_y1,  1, 1 },
    { "bessel_yn",   bi_bessel_yn,  2, 2 },
@@ -649,6 +656,8 @@ fplib_err(
 }
 #endif
 
+
+/*
 CELL *
 bi_sin(CELL *sp)
 {
@@ -673,31 +682,13 @@ bi_sin(CELL *sp)
 #endif
     return_CELL("bi_sin", sp);
 }
+*/
 
-CELL *
-bi_cos(CELL *sp)
-{
-    TRACE_FUNC("bi_cos", sp);
-
-#if ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = cos(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = cos(sp->dval);
-	if (errno)
-	    fplib_err("cos", x, "loss of precision");
-    }
-#endif
-    return_CELL("bi_cos", sp);
-}
+FUNC_1P_DBL(sin,"loss of precision")
+FUNC_1P_DBL(cos,"loss of precision")
+FUNC_1P_DBL(log,"domain error")
+FUNC_1P_DBL(exp,"overflow")
+FUNC_1P_DBL(sqrt,"domain error")
 
 CELL *
 bi_atan2(CELL *sp)
@@ -723,56 +714,6 @@ bi_atan2(CELL *sp)
     return_CELL("bi_atan2", sp);
 }
 
-CELL *
-bi_log(CELL *sp)
-{
-    TRACE_FUNC("bi_log", sp);
-
-#if ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = log(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = log(sp->dval);
-	if (errno)
-	    fplib_err("log", x, "domain error");
-    }
-#endif
-    return_CELL("bi_log", sp);
-}
-
-CELL *
-bi_exp(CELL *sp)
-{
-    TRACE_FUNC("bi_exp", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = exp(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = exp(sp->dval);
-	if (errno && sp->dval)
-	    fplib_err("exp", x, "overflow");
-	/* on underflow sp->dval==0, ignore */
-    }
-#endif
-    return_CELL("bi_exp", sp);
-}
 
 CELL *
 bi_int(CELL *sp)
@@ -785,30 +726,6 @@ bi_int(CELL *sp)
     return_CELL("bi_int", sp);
 }
 
-CELL *
-bi_sqrt(CELL *sp)
-{
-    TRACE_FUNC("bi_sqrt", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = sqrt(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = sqrt(sp->dval);
-	if (errno)
-	    fplib_err("sqrt", x, "domain error");
-    }
-#endif
-    return_CELL("bi_sqrt", sp);
-}
 
 #if !(defined(mawk_srand) || defined(mawk_rand))
 /* For portability, we'll use our own random number generator , taken
@@ -1442,304 +1359,54 @@ bi_gsub(CELL *sp)
  **********************************************/
 #ifdef HAVE_C99_FUNCS
 
-CELL *
-bi_tan(CELL *sp)
-{
-    TRACE_FUNC("bi_tan", sp);
+FUNC_1P_DBL(tan,"loss of precision")
+FUNC_1P_DBL(acos,"loss of precision")
+FUNC_1P_DBL(asin,"loss of precision")
+FUNC_1P_DBL(atan,"loss of precision")
+FUNC_1P_DBL(cosh,"loss of precision")
+FUNC_1P_DBL(sinh,"loss of precision")
+FUNC_1P_DBL(tanh,"loss of precision")
+FUNC_1P_DBL(acosh,"loss of precision")
+FUNC_1P_DBL(asinh,"loss of precision")
+FUNC_1P_DBL(atanh,"loss of precision")
 
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = tan(sp->dval);
-#else
-    {
-	double x;
+FUNC_1P_DBL(log10,"domain error")
+FUNC_1P_DBL(log2,"domain error")
+FUNC_1P_DBL(log1p,"domain error")
+FUNC_1P_DBL(logb,"domain error")
+FUNC_1P_DBL(ilogb,"domain error")
+FUNC_1P_DBL(exp2,"domain error")
+FUNC_1P_DBL(expm1,"domain error")
 
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = tan(sp->dval);
-	if (errno)
-	    fplib_err("tan", x, "domain error");
-    }
+FUNC_DIFF_2P_DBL_INT(ldexp,ldexp,"domain error")
+FUNC_2P_DBL(pow,"domain error")
+FUNC_2P_DBL(hypot,"domain error")
+
+FUNC_1P_DBL(ceil,"loss of precision")
+FUNC_1P_DBL(floor,"loss of precision")
+FUNC_1P_DBL(trunc,"loss of precision")
+FUNC_1P_DBL(round,"loss of precision")
+FUNC_DIFF_1P_DBL(abs, fabs, "loss of precision")
+
+FUNC_1P_DBL(cbrt,"domain error")
+
+FUNC_1P_DBL(erf,"domain error")
+FUNC_1P_DBL(erfc,"domain error")
+FUNC_1P_DBL(lgamma,"domain error")
+FUNC_1P_DBL(tgamma,"domain error")
+
+
+# ifdef _GNU_SOURCE
+FUNC_DIFF_1P_DBL(bessel_j0, j0, "domain error")
+FUNC_DIFF_1P_DBL(bessel_j1, j1, "domain error")
+FUNC_DIFF_2P_INT_DBL(bessel_jn, jn, "domain error")
+
+FUNC_DIFF_1P_DBL(bessel_y0, y0, "domain error")
+FUNC_DIFF_1P_DBL(bessel_y1, y1, "domain error")
+FUNC_DIFF_2P_INT_DBL(bessel_yn, yn, "domain error")
+
 #endif
-    return_CELL("bi_tan", sp);
-}
 
-CELL *
-bi_acos(CELL *sp)
-{
-    TRACE_FUNC("bi_acos", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = acos(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = acos(sp->dval);
-	if (errno)
-	    fplib_err("acos", x, "domain error");
-    }
-#endif
-    return_CELL("bi_acos", sp);
-}
-
-CELL *
-bi_asin(CELL *sp)
-{
-    TRACE_FUNC("bi_asin", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = asin(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = asin(sp->dval);
-	if (errno)
-	    fplib_err("asin", x, "domain error");
-    }
-#endif
-    return_CELL("bi_asin", sp);
-}
-
-CELL *
-bi_atan(CELL *sp)
-{
-    TRACE_FUNC("bi_atan", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = atan(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = atan(sp->dval);
-	if (errno)
-	    fplib_err("atan", x, "domain error");
-    }
-#endif
-    return_CELL("bi_atan", sp);
-}
-
-CELL *
-bi_cosh(CELL *sp)
-{
-    TRACE_FUNC("bi_cosh", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = cosh(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = cosh(sp->dval);
-	if (errno)
-	    fplib_err("cosh", x, "domain error");
-    }
-#endif
-    return_CELL("bi_cosh", sp);
-}
-
-CELL *
-bi_sinh(CELL *sp)
-{
-    TRACE_FUNC("bi_sinh", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = sinh(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = sinh(sp->dval);
-	if (errno)
-	    fplib_err("sinh", x, "domain error");
-    }
-#endif
-    return_CELL("bi_sinh", sp);
-}
-
-CELL *
-bi_tanh(CELL *sp)
-{
-    TRACE_FUNC("bi_tanh", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = tanh(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = tanh(sp->dval);
-	if (errno)
-	    fplib_err("tanh", x, "domain error");
-    }
-#endif
-    return_CELL("bi_tanh", sp);
-}
-
-CELL *
-bi_acosh(CELL *sp)
-{
-    TRACE_FUNC("bi_acosh", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = acosh(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = acosh(sp->dval);
-	if (errno)
-	    fplib_err("acosh", x, "domain error");
-    }
-#endif
-    return_CELL("bi_acosh", sp);
-}
-
-CELL *
-bi_asinh(CELL *sp)
-{
-    TRACE_FUNC("bi_asinh", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = asinh(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = asinh(sp->dval);
-	if (errno)
-	    fplib_err("asinh", x, "domain error");
-    }
-#endif
-    return_CELL("bi_asinh", sp);
-}
-
-CELL *
-bi_atanh(CELL *sp)
-{
-    TRACE_FUNC("bi_atanh", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = atanh(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = atanh(sp->dval);
-	if (errno)
-	    fplib_err("atanh", x, "domain error");
-    }
-#endif
-    return_CELL("bi_atanh", sp);
-}
-
-CELL *
-bi_ldexp(CELL *sp)
-{
-    TRACE_FUNC("bi_ldexp", sp);
-
-#if  !	STDC_MATHERR
-    sp--;
-    if (TEST2(sp) != TWO_DOUBLES)
-        cast2_to_d(sp);
-    sp->dval = ldexpl(sp->dval, (sp + 1)->dval);
-#else
-    {
-	errno = 0;
-	sp--;
-	if (TEST2(sp) != TWO_DOUBLES)
-	    cast2_to_d(sp);
-	sp->dval = ldexpl(sp->dval, (sp + 1)->dval);
-	if (errno)
-	    rt_error("ldexp(x,exp) : domain error");
-    }
-#endif
-    return_CELL("bi_ldexp", sp);
-}
-
-CELL *
-bi_log10(CELL *sp)
-{
-    TRACE_FUNC("bi_log10", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = log10(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = log10(sp->dval);
-	if (errno)
-	    fplib_err("log10", x, "domain error");
-    }
-#endif
-    return_CELL("bi_log10", sp);
-}
 
 CELL *
 bi_mod(CELL *sp)
@@ -1765,154 +1432,8 @@ bi_mod(CELL *sp)
     return_CELL("bi_mod", sp);
 }
 
-CELL *
-bi_pow(CELL *sp)
-{
-    TRACE_FUNC("bi_pow", sp);
 
-#if  !	STDC_MATHERR
-    sp--;
-    if (TEST2(sp) != TWO_DOUBLES)
-        cast2_to_d(sp);
-    sp->dval = pow(sp->dval, (sp + 1)->dval);
-#else
-    {
-	errno = 0;
-	sp--;
-	if (TEST2(sp) != TWO_DOUBLES)
-	    cast2_to_d(sp);
-	sp->dval = pow(sp->dval, (sp + 1)->dval);
-	if (errno)
-	    rt_error("pow(x,exp) : domain error");
-    }
-#endif
-    return_CELL("bi_pow", sp);
-}
 
-CELL *
-bi_ceil(CELL *sp)
-{
-    TRACE_FUNC("bi_ceil", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = ceil(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = ceil(sp->dval);
-	if (errno)
-	    fplib_err("ceil", x, "domain error");
-    }
-#endif
-    return_CELL("bi_ceil", sp);
-}
-
-CELL *
-bi_floor(CELL *sp)
-{
-    TRACE_FUNC("bi_floor", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = floor(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = floor(sp->dval);
-	if (errno)
-	    fplib_err("floor", x, "domain error");
-    }
-#endif
-    return_CELL("bi_floor", sp);
-}
-
-CELL *
-bi_trunc(CELL *sp)
-{
-    TRACE_FUNC("bi_trunc", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = trunc(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = trunc(sp->dval);
-	if (errno)
-	    fplib_err("trunc", x, "domain error");
-    }
-#endif
-    return_CELL("bi_trunc", sp);
-}
-
-CELL *
-bi_round(CELL *sp)
-{
-    TRACE_FUNC("bi_round", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-        cast1_to_d(sp);
-    sp->dval = round(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = round(sp->dval);
-	if (errno)
-	    fplib_err("round", x, "domain error");
-    }
-#endif
-    return_CELL("bi_round", sp);
-}
-
-CELL *
-bi_abs(CELL *sp)
-{
-    TRACE_FUNC("bi_abs", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = abs(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = abs(sp->dval);
-	if (errno)
-	    fplib_err("abs", x, "domain error");
-    }
-#endif
-    return_CELL("bi_abs", sp);
-}
 
 CELL *
 bi_min(CELL *sp)
@@ -1962,461 +1483,176 @@ bi_max(CELL *sp)
     return_CELL("bi_max", sp);
 }
 
-CELL *
-bi_exp2(CELL *sp)
-{
-    TRACE_FUNC("bi_exp2", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = exp2(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = exp2(sp->dval);
-	if (errno)
-	    fplib_err("exp2", x, "domain error");
-    }
-#endif
-    return_CELL("bi_exp2", sp);
-}
-
-CELL *
-bi_expm1(CELL *sp)
-{
-    TRACE_FUNC("bi_expm1", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = expm1(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = expm1(sp->dval);
-	if (errno)
-	    fplib_err("expm1", x, "domain error");
-    }
-#endif
-    return_CELL("bi_expm1", sp);
-}
-
-CELL *
-bi_log2(CELL *sp)
-{
-    TRACE_FUNC("bi_log2", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = log2(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = log2(sp->dval);
-	if (errno)
-	    fplib_err("log2", x, "domain error");
-    }
-#endif
-    return_CELL("bi_log2", sp);
-}
-
-CELL *
-bi_log1p(CELL *sp)
-{
-    TRACE_FUNC("bi_log1p", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = log1p(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = log1p(sp->dval);
-	if (errno)
-	    fplib_err("log1p", x, "domain error");
-    }
-#endif
-    return_CELL("bi_log1p", sp);
-}
-
-CELL *
-bi_ilogb(CELL *sp)
-{
-    TRACE_FUNC("bi_ilogb", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = ilogb(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = ilogb(sp->dval);
-	if (errno)
-	    fplib_err("ilogb", x, "domain error");
-    }
-#endif
-    return_CELL("bi_ilogb", sp);
-}
-
-CELL *
-bi_logb(CELL *sp)
-{
-    TRACE_FUNC("bi_logb", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = logb(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = logb(sp->dval);
-	if (errno)
-	    fplib_err("logb", x, "domain error");
-    }
-#endif
-    return_CELL("bi_logb", sp);
-}
-
-CELL *
-bi_cbrt(CELL *sp)
-{
-    TRACE_FUNC("bi_cbrt", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = cbrt(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = cbrt(sp->dval);
-	if (errno)
-	    fplib_err("cbrt", x, "domain error");
-    }
-#endif
-    return_CELL("bi_cbrt", sp);
-}
-
-CELL *
-bi_hypot(CELL *sp)
-{
-    TRACE_FUNC("bi_hypot", sp);
-
-#if  !	STDC_MATHERR
-    sp--;
-    if (TEST2(sp) != TWO_DOUBLES)
-        cast2_to_d(sp);
-    sp->dval = hypot(sp->dval, (sp + 1)->dval);
-#else
-    {
-	errno = 0;
-	sp--;
-	if (TEST2(sp) != TWO_DOUBLES)
-	    cast2_to_d(sp);
-	sp->dval = hypot(sp->dval, (sp + 1)->dval);
-	if (errno)
-	    rt_error("hypot(x,exp) : domain error");
-    }
-#endif
-    return_CELL("bi_hypot", sp);
-}
-
-
-CELL *
-bi_erf(CELL *sp)
-{
-    TRACE_FUNC("bi_erf", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = erf(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = erf(sp->dval);
-	if (errno)
-	    fplib_err("erf", x, "domain error");
-    }
-#endif
-    return_CELL("bi_erf", sp);
-}
-
-CELL *
-bi_erfc(CELL *sp)
-{
-    TRACE_FUNC("bi_erfc", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = erfc(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = erfc(sp->dval);
-	if (errno)
-	    fplib_err("erfc", x, "domain error");
-    }
-#endif
-    return_CELL("bi_erfc", sp);
-}
-
-CELL *
-bi_lgamma(CELL *sp)
-{
-    TRACE_FUNC("bi_lgamma", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = lgamma(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = lgamma(sp->dval);
-	if (errno)
-	    fplib_err("lgamma", x, "domain error");
-    }
-#endif
-    return_CELL("bi_lgamma", sp);
-}
-
-CELL *
-bi_tgamma(CELL *sp)
-{
-    TRACE_FUNC("bi_tgamma", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = tgamma(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = tgamma(sp->dval);
-	if (errno)
-	    fplib_err("tgamma", x, "domain error");
-    }
-#endif
-    return_CELL("bi_tgamma", sp);
-}
-
-# ifdef _GNU_SOURCE
-CELL *
-bi_bessel_j0(CELL *sp)
-{
-    TRACE_FUNC("bi_bessel_j0", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = j0(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = j0(sp->dval);
-	if (errno)
-	    fplib_err("bessel_j0", x, "domain error");
-    }
-#endif
-    return_CELL("bi_bessel_j0", sp);
-}
-
-CELL *
-bi_bessel_j1(CELL *sp)
-{
-    TRACE_FUNC("bi_bessel_j1", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = j1(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = j1(sp->dval);
-	if (errno)
-	    fplib_err("bessel_j1", x, "domain error");
-    }
-#endif
-    return_CELL("bi_bessel_j1", sp);
-}
-
-CELL *
-bi_bessel_jn(CELL *sp)
-{
-    int param1;
-    TRACE_FUNC("bi_bessel_jn", sp);
-
-#if  !	STDC_MATHERR
-    sp--;
-    if (TEST2(sp) != TWO_DOUBLES)
-        cast2_to_d(sp);
-    param1 = (int) sp->dval;
-    sp->dval = jn(param1, (sp + 1)->dval);
-#else
-    {
-	errno = 0;
-	sp--;
-	if (TEST2(sp) != TWO_DOUBLES)
-	    cast2_to_d(sp);
-    param1 = (int) sp->dval;
-    sp->dval = jn(param1, (sp + 1)->dval);
-	if (errno)
-	    rt_error("min(x,exp) : domain error");
-    }
-#endif
-    return_CELL("bi_bessel_jn", sp);
-}
-
-CELL *
-bi_bessel_y0(CELL *sp)
-{
-    TRACE_FUNC("bi_bessel_y0", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = y0(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = y0(sp->dval);
-	if (errno)
-	    fplib_err("bessel_y0", x, "domain error");
-    }
-#endif
-    return_CELL("bi_bessel_y0", sp);
-}
-
-CELL *
-bi_bessel_y1(CELL *sp)
-{
-    TRACE_FUNC("bi_bessel_y1", sp);
-
-#if  ! STDC_MATHERR
-    if (sp->type != C_DOUBLE)
-	cast1_to_d(sp);
-    sp->dval = y1(sp->dval);
-#else
-    {
-	double x;
-
-	errno = 0;
-	if (sp->type != C_DOUBLE)
-	    cast1_to_d(sp);
-	x = sp->dval;
-	sp->dval = y1(sp->dval);
-	if (errno)
-	    fplib_err("bessel_y1", x, "domain error");
-    }
-#endif
-    return_CELL("bi_bessel_y1", sp);
-}
-
-CELL *
-bi_bessel_yn(CELL *sp)
-{
-    int param1;
-    TRACE_FUNC("bi_bessel_yn", sp);
-
-#if  !	STDC_MATHERR
-    sp--;
-    if (TEST2(sp) != TWO_DOUBLES)
-        cast2_to_d(sp);
-    param1 = (int) sp->dval;
-    sp->dval = yn(param1, (sp + 1)->dval);
-#else
-    {
-	errno = 0;
-	sp--;
-	if (TEST2(sp) != TWO_DOUBLES)
-	    cast2_to_d(sp);
-    param1 = (int) sp->dval;
-    sp->dval = yn(param1, (sp + 1)->dval);
-	if (errno)
-	    rt_error("min(x,exp) : domain error");
-    }
-#endif
-    return_CELL("bi_bessel_yn", sp);
-}
-
-#endif  /* _GNU_SOURCE  */
-
 #endif  /* HAVE_C99_FUNCS */
+
+/*************************************************
+ * bit-wise Arithmetic
+ ************************************************/
+
+CELL *
+bi_compl(CELL *sp)
+{
+    TRACE_FUNC("bi_compl", sp);
+
+#if  !	STDC_MATHERR
+    if (sp->type != C_DOUBLE)
+        cast1_to_d(sp);
+    sp->dval = ~ d_to_U(sp->dval);
+#else
+    {
+	errno = 0;
+    if (sp->type != C_DOUBLE)
+        cast1_to_d(sp);
+    sp->dval = ~ d_to_U(sp->dval);
+	if (errno)
+	    rt_error("compl : domain error");
+    }
+#endif
+    return_CELL("bi_compl", sp);
+}
+
+CELL *
+bi_lshift(CELL *sp)
+{
+    UInt param1;
+    TRACE_FUNC("bi_lshift", sp);
+
+#if  !	STDC_MATHERR
+    sp--;
+    if (TEST2(sp) != TWO_DOUBLES)
+        cast2_to_d(sp);
+    param1 = d_to_U(sp->dval);
+    sp->dval = param1 << d_to_U((sp + 1)->dval);
+#else
+    {
+	errno = 0;
+	sp--;
+	if (TEST2(sp) != TWO_DOUBLES)
+	    cast2_to_d(sp);
+    param1 = d_to_U(sp->dval);
+    sp->dval = (double) (param1 << d_to_U((sp + 1)->dval));
+	if (errno)
+	    rt_error("lshift : domain error");
+    }
+#endif
+    return_CELL("bi_lshift", sp);
+}
+
+
+CELL *
+bi_rshift(CELL *sp)
+{
+    UInt param1;
+    TRACE_FUNC("bi_rshift", sp);
+
+#if  !	STDC_MATHERR
+    sp--;
+    if (TEST2(sp) != TWO_DOUBLES)
+        cast2_to_d(sp);
+    param1 = d_to_U(sp->dval);
+    sp->dval = param1 >> d_to_U((sp + 1)->dval);
+#else
+    {
+	errno = 0;
+	sp--;
+	if (TEST2(sp) != TWO_DOUBLES)
+	    cast2_to_d(sp);
+    param1 = d_to_U(sp->dval);
+    sp->dval = (double) (param1 >> d_to_U((sp + 1)->dval));
+	if (errno)
+	    rt_error("rshift : domain error");
+    }
+#endif
+    return_CELL("bi_rshift", sp);
+}
+
+CELL *
+bi_xor(CELL *sp)
+{
+    UInt param1;
+    UInt param2;
+    TRACE_FUNC("bi_xor", sp);
+
+#if  !	STDC_MATHERR
+    sp--;
+    if (TEST2(sp) != TWO_DOUBLES)
+        cast2_to_d(sp);
+    param1 = d_to_U(sp->dval);
+    param2 = d_to_U((sp + 1)->dval);
+    sp->dval = param1 ^ param2;
+#else
+    {
+	errno = 0;
+	sp--;
+	if (TEST2(sp) != TWO_DOUBLES)
+	    cast2_to_d(sp);
+    param1 = d_to_U(sp->dval);
+    param2 = d_to_U((sp + 1)->dval);
+    sp->dval = param1 ^ param2;
+	if (errno)
+	    rt_error("xor : domain error");
+    }
+#endif
+    return_CELL("bi_xor", sp);
+}
+
+CELL *
+bi_and(CELL *sp)
+{
+    UInt param1;
+    UInt param2;
+    TRACE_FUNC("bi_and", sp);
+
+#if  !	STDC_MATHERR
+    sp--;
+    if (TEST2(sp) != TWO_DOUBLES)
+        cast2_to_d(sp);
+    param1 = d_to_U(sp->dval);
+    param2 = d_to_U((sp + 1)->dval);
+    sp->dval = param1 & param2;
+#else
+    {
+	errno = 0;
+	sp--;
+	if (TEST2(sp) != TWO_DOUBLES)
+	    cast2_to_d(sp);
+    param1 = d_to_U(sp->dval);
+    param2 = d_to_U((sp + 1)->dval);
+    sp->dval = param1 & param2;
+	if (errno)
+	    rt_error("and : domain error");
+    }
+#endif
+    return_CELL("bi_and", sp);
+}
+
+CELL *
+bi_or(CELL *sp)
+{
+    UInt param1;
+    UInt param2;
+    TRACE_FUNC("bi_or", sp);
+
+#if  !	STDC_MATHERR
+    sp--;
+    if (TEST2(sp) != TWO_DOUBLES)
+        cast2_to_d(sp);
+    param1 = d_to_U(sp->dval);
+    param2 = d_to_U((sp + 1)->dval);
+    sp->dval = param1 | param2;
+#else
+    {
+	errno = 0;
+	sp--;
+	if (TEST2(sp) != TWO_DOUBLES)
+	    cast2_to_d(sp);
+    param1 = d_to_U(sp->dval);
+    param2 = d_to_U((sp + 1)->dval);
+    sp->dval = param1 | param2;
+	if (errno)
+	    rt_error("or : domain error");
+    }
+#endif
+    return_CELL("bi_or", sp);
+}
+

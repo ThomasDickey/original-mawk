@@ -40,11 +40,9 @@ CPP             = gcc -E
 
 BUILD_CC        = ${CC}
 CPPFLAGS	= -I. -I$(srcdir) -DHAVE_CONFIG_H  -DLOCAL_REGEXP -D_GNU_SOURCE -D_FILE_OFFSET_BITS=64 
-EXTRA_CFLAGS	= 
+EXTRA_CFLAGS	=
 CFLAGS          = -O2 -DHAVE_C99_FUNCS $(EXTRA_CFLAGS)
 LDFLAGS         = -O2 
-#CFLAGS          = -pg -O0 -DHAVE_C99_FUNCS $(EXTRA_CFLAGS)
-#LDFLAGS         = -pg -O0 
 LIBS            = -lm 
 
 BUILD_CFLAGS	= ${CFLAGS}
@@ -85,7 +83,7 @@ PROG  = mawk$x
 OBJS = parse$o scan$o memory$o main$o hash$o execute$o code$o \
   da$o error$o init$o bi_vars$o cast$o print$o bi_funct$o \
   kw$o jmp$o array$o field$o split$o re_cmpl$o regexp$o zmalloc$o \
-  fin$o files$o scancode$o matherr$o fcall$o version$o 
+  fin$o files$o scancode$o matherr$o fcall$o version$o trace$o
 
 .SUFFIXES: .c .i $o
 
@@ -207,3 +205,4 @@ split.o : array.h bi_funct.h bi_vars.h config.h field.h mawk.h memory.h nstd.h p
 version.o : array.h config.h init.h mawk.h nstd.h patchlev.h sizes.h symtype.h types.h
 zmalloc.o : config.h mawk.h nstd.h sizes.h types.h zmalloc.h
 regexp.o : rexpdb.c rexp4.c rexp2.c regexp_system.c sizes.h mawk.h rexp0.c rexp1.c config.h rexp.h regexp.h nstd.h rexp3.c rexp.c field.h
+trace.o : repl.h field.h

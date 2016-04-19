@@ -28,6 +28,7 @@ the GNU General Public License, version 2, 1991.
 #define  BI_FUNCT_H  1
 
 #include "symtype.h"
+#include <setjmp.h>
 
 extern BI_REC bi_funct[];
 
@@ -58,6 +59,13 @@ CELL *bi_int(CELL *);
 CELL *bi_sqrt(CELL *);
 CELL *bi_srand(CELL *);
 CELL *bi_rand(CELL *);
+
+CELL * bi_compl(CELL *);
+CELL * bi_lshift(CELL *);
+CELL * bi_rshift(CELL *);
+CELL * bi_xor(CELL *);
+CELL * bi_and(CELL *);
+CELL * bi_or(CELL *);
 
 #ifdef HAVE_C99_FUNCS
 /* C99 eqivalent functions (NON-STANDARD) */
@@ -113,5 +121,207 @@ CELL *bi_systime(CELL *);
 CELL *bi_close(CELL *);
 CELL *bi_system(CELL *);
 CELL *bi_fflush(CELL *);
+
+/********************************************
+ * MACROS for defining bi_xxxx() functions
+ *******************************************/
+
+/*  EXAMPLE single parameter of double
+CELL *
+bi_acos(CELL *sp)
+{
+    TRACE_FUNC("bi_acos", sp);
+
+#if  ! STDC_MATHERR
+    if (sp->type != C_DOUBLE)
+	cast1_to_d(sp);
+    sp->dval = acos(sp->dval);
+#else
+    {
+	double x;
+
+	errno = 0;
+	if (sp->type != C_DOUBLE)
+	    cast1_to_d(sp);
+	x = sp->dval;
+	sp->dval = acos(sp->dval);
+	if (errno)
+	    fplib_err("acos", x, "domain error");
+    }
+#endif
+    return_CELL("bi_acos", sp);
+}
+
+
+*/
+
+
+#define FUNC_STR(name)             #name
+#define BIFUNC_NAME(name)          #name
+#define BIFUNC_STR(name)           BIFUNC_NAME(bi_ ## name)
+
+#define FUNC_NAME(name,p)          name(p)
+#define FUNC2_NAME(name,p1,p2)     name(p1,p2)
+
+/* to catch errors for bessel_jn use jmp_bug
+ * and return nan
+ */
+#if ! STDC_MATHERR
+#define SAFE_FUNC2_NAME(res,name,p1,p2) \
+  do {                              \
+  jmp_buf sf_jmp;                   \
+  if (setjmp(sf_jmp) == 0) {        \
+      res = FUNC2_NAME(name,p1,p2); \
+  } else {                          \
+      res = log(-1);  /* return nan */ \
+  }                                 \
+  } while(0)
+#else
+#define SAFE_FUNC2_NAME(res,name,p1,p2) \
+  do {                              \
+      res = FUNC2_NAME(name,p1,p2); \
+  } while(0)
+#endif
+
+#if ! STDC_MATHERR
+
+/* for Arithmetic funcs like sin(x) */
+#define FUNC_1P_DBL(name, msg)                  \
+    CELL * bi_##name(CELL *sp) {                \
+    TRACE_FUNC(BIFUNC_STR(name), sp);           \
+    if (sp->type != C_DOUBLE) cast1_to_d(sp);   \
+    sp->dval = FUNC_NAME(name,sp->dval);        \
+    return_CELL(BIFUNC_STR(name), sp); }
+
+/* different C function name to mawk function name */
+#define FUNC_DIFF_1P_DBL(name, fn, msg)         \
+    CELL * bi_##name(CELL *sp) {                \
+    TRACE_FUNC(BIFUNC_STR(name), sp);           \
+    if (sp->type != C_DOUBLE) cast1_to_d(sp);   \
+    sp->dval = FUNC_NAME(fn,sp->dval);          \
+    return_CELL(BIFUNC_STR(name), sp); }
+
+/* for Arithmetic funcs like bessel_jn(x,y) */
+#define FUNC_DIFF_2P_INT_DBL(name, fn, msg)       \
+    CELL * bi_##name(CELL *sp) {                  \
+    int param1;                                   \
+    TRACE_FUNC(BIFUNC_STR(name), sp);             \
+    sp--;                                         \
+    if (TEST2(sp) != TWO_DOUBLES) cast2_to_d(sp); \
+    param1 = (int) sp->dval;                      \
+    SAFE_FUNC2_NAME(sp->dval,fn,param1,(sp + 1)->dval);  \
+    return_CELL(BIFUNC_STR(name), sp); }
+
+/* for Arithmetic funcs like ldexp(x,y) */
+#define FUNC_DIFF_2P_DBL_INT(name, fn, msg)       \
+    CELL * bi_##name(CELL *sp) {                  \
+    int param2;                                   \
+    TRACE_FUNC(BIFUNC_STR(name), sp);             \
+    sp--;                                         \
+    if (TEST2(sp) != TWO_DOUBLES) cast2_to_d(sp); \
+    param2 = (int) (sp + 1)->dval;                      \
+    SAFE_FUNC2_NAME(sp->dval,fn,sp->dval,param2);  \
+    return_CELL(BIFUNC_STR(name), sp); }
+
+/* for Arithmetic funcs like atan2(x,y) */
+#define FUNC_2P_DBL(name, msg)                    \
+    CELL * bi_##name(CELL *sp) {                  \
+    TRACE_FUNC(BIFUNC_STR(name), sp);             \
+    sp--;                                         \
+    if (TEST2(sp) != TWO_DOUBLES) cast2_to_d(sp); \
+    sp->dval = FUNC2_NAME(name,sp->dval,(sp + 1)->dval);  \
+    return_CELL(BIFUNC_STR(name), sp); }
+
+#else    /* STDC_MATHERR */
+
+/* for Arithmetic funcs like sin(x) */
+#define FUNC_1P_DBL(name, msg)                  \
+CELL * bi_##name(CELL *sp) {                    \
+    TRACE_FUNC(BIFUNC_STR(name), sp);           \
+    { double x;                                 \
+    errno = 0;                                  \
+    if (sp->type != C_DOUBLE) cast1_to_d(sp);   \
+    x = sp->dval;                               \
+    sp->dval =  FUNC_NAME(name,sp->dval);       \
+    if (errno)  fplib_err(FUNC_STR(name), x, msg);  \
+    }                                           \
+    return_CELL(BIFUNC_STR(name), sp); }
+// 	    rt_error("ldexp(x,exp) : domain error");  <- rather than fplib() ??
+
+/* different C function name to mawk function name */
+#define FUNC_DIFF_1P_DBL(name, fn, msg)       \
+CELL * bi_##name(CELL *sp) {                    \
+    TRACE_FUNC(BIFUNC_STR(name), sp);           \
+    { double x;                                 \
+    errno = 0;                                  \
+    if (sp->type != C_DOUBLE) cast1_to_d(sp);   \
+    x = sp->dval;                               \
+    sp->dval =  FUNC_NAME(fn,sp->dval);         \
+    if (errno)  fplib_err(FUNC_STR(name), x, msg);  \
+    }                                           \
+    return_CELL(BIFUNC_STR(name), sp); }
+
+/* for Arithmetic funcs like bessel_jn(x,y) */
+#define FUNC_DIFF_2P_INT_DBL(name, fn, msg)       \
+CELL * bi_##name(CELL *sp) {                      \
+    int param1;                                   \
+    TRACE_FUNC(BIFUNC_STR(name), sp);             \
+    { double x;                                   \
+    errno = 0;                                    \
+    sp--;                                         \
+    if (TEST2(sp) != TWO_DOUBLES) cast2_to_d(sp); \
+    x = sp->dval;                                 \
+    param1 = (int) sp->dval;                      \
+    sp->dval = FUNC2_NAME(fn,param1,(sp + 1)->dval);  \
+    if (errno)  fplib_err(FUNC_STR(name), x, msg);  \
+    }                                               \
+    return_CELL(BIFUNC_STR(name), sp); }
+
+/* for Arithmetic funcs like ldexp(x,y) */
+#define FUNC_DIFF_2P_DBL_INT(name, fn, msg)       \
+CELL * bi_##name(CELL *sp) {                      \
+    int param2;                                   \
+    TRACE_FUNC(BIFUNC_STR(name), sp);             \
+    { double x;                                   \
+    errno = 0;                                    \
+    sp--;                                         \
+    if (TEST2(sp) != TWO_DOUBLES) cast2_to_d(sp); \
+    x = sp->dval;                                 \
+    param2 = (int) (sp + 1)->dval;                \
+    SAFE_FUNC2_NAME(sp->dval,fn,sp->dval,param2);    \
+    if (errno)  fplib_err(FUNC_STR(name), x, msg);  \
+    }                                               \
+    return_CELL(BIFUNC_STR(name), sp); }
+
+/* for Arithmetic funcs like atan2(x,y) */
+#define FUNC_DIFF_2P_DBL(name, fn, msg)           \
+CELL * bi_##name(CELL *sp) {                      \
+    TRACE_FUNC(BIFUNC_STR(name), sp);             \
+    { double x;                                   \
+    errno = 0;                                    \
+    sp--;                                         \
+    if (TEST2(sp) != TWO_DOUBLES) cast2_to_d(sp); \
+    x = sp->dval;                                 \
+    SAFE_FUNC2_NAME(sp->dval,fn,sp->dval,(sp + 1)->dval);  \
+    if (errno)  fplib_err(FUNC_STR(name), x, msg);  \
+    }                                               \
+    return_CELL(BIFUNC_STR(name), sp); }
+
+/* for Arithmetic funcs like atan2(x,y) */
+#define FUNC_2P_DBL(name, msg)           \
+CELL * bi_##name(CELL *sp) {                      \
+    TRACE_FUNC(BIFUNC_STR(name), sp);             \
+    { double x;                                   \
+    errno = 0;                                    \
+    sp--;                                         \
+    if (TEST2(sp) != TWO_DOUBLES) cast2_to_d(sp); \
+    x = sp->dval;                                 \
+    SAFE_FUNC2_NAME(sp->dval,name,sp->dval,(sp + 1)->dval);  \
+    if (errno)  fplib_err(FUNC_STR(name), x, msg);  \
+    }                                               \
+    return_CELL(BIFUNC_STR(name), sp); }
+
+#endif
+
 
 #endif /* BI_FUNCT_H  */

@@ -221,45 +221,45 @@ extern void da_string(FILE *fp, const char *, size_t);
 #endif
 
 #if OPT_TRACE > 0
-extern void Trace(const char *,...) GCC_PRINTFLIKE(1,2);
-extern void TraceVA(const char *, va_list);
-#define TRACE(params) Trace params
+ extern void Trace(const char *,...) GCC_PRINTFLIKE(1,2);
+ extern void TraceVA(const char *, va_list);
+ #define TRACE(params) Trace params
 #if OPT_TRACE > 1
-#define TRACE2(params) Trace params
+ #define TRACE2(params) Trace params
 #endif
 #endif
 
 #ifndef TRACE
-#define TRACE(params)		/* nothing */
+ #define TRACE(params)		/* nothing */
 #endif
 
 #ifndef TRACE2
-#define TRACE2(params)		/* nothing */
+ #define TRACE2(params)		/* nothing */
 #endif
 
 #if OPT_TRACE > 0
-extern void TraceCell(CELL *);
-extern void TraceString(STRING *);
-extern void TraceString2(const char *, size_t);
-#define TRACE_CELL(cp)		TraceCell(cp)
-#define TRACE_STRING(cp)	TraceString(cp)
-#define TRACE_STRING2(str,len)	TraceString2(str,len)
+ extern void TraceCell(CELL *);
+ extern void TraceString(STRING *);
+ extern void TraceString2(const char *, size_t);
+ #define TRACE_CELL(cp)		TraceCell(cp)
+ #define TRACE_STRING(cp)	TraceString(cp)
+ #define TRACE_STRING2(str,len)	TraceString2(str,len)
 #else
-#define TRACE_CELL(cp)		/* nothing */
-#define TRACE_STRING(cp)	/* nothing */
-#define TRACE_STRING2(str,len)	/* nothing */
+ #define TRACE_CELL(cp)		/* nothing */
+ #define TRACE_STRING(cp)	/* nothing */
+ #define TRACE_STRING2(str,len)	/* nothing */
 #endif
 
 #if OPT_TRACE > 0
-extern void TraceFunc(const char *, CELL *);
-#define TRACE_FUNC(name,cp) TraceFunc(name,cp)
+ extern void TraceFunc(const char *, CELL *);
+ #define TRACE_FUNC(name,cp) TraceFunc(name,cp)
 #else
-#define TRACE_FUNC(name,cp)	/* nothing */
+ #define TRACE_FUNC(name,cp)	/* nothing */
 #endif
 
 #if OPT_TRACE > 0
-extern const char *da_type_name(CELL *);
-extern const char *da_op_name(INST *);
+ extern const char *da_type_name(CELL *);
+ extern const char *da_op_name(INST *);
 #endif
 
 #ifdef NO_LEAKS

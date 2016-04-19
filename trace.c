@@ -14,6 +14,9 @@ the GNU General Public License, version 2, 1991.
  */
 #include <mawk.h>
 #include <repl.h>
+#include <field.h>
+
+#if OPT_TRACE > 0
 
 static FILE *trace_fp;
 
@@ -69,7 +72,7 @@ TraceCell(CELL *cp)
 	    break;
         case C_FIELDWIDTHS:
 	    TRACE(("split on fixed field widths: "));
-	    TraceString(char_ptr(&fldwidths_shadow));
+	    TraceString(fieldwidths_shadow.fldstr);
 	    TRACE(("\n"));
 	    break;
 	case C_REPL:
@@ -162,4 +165,6 @@ trace_leaks(void)
 	trace_fp = 0;
     }
 }
-#endif
+#endif /* NO_LEAKS */
+
+#endif  /* OPT_TRACE > 0  */

@@ -60,14 +60,12 @@ print_version(void)
 #define SHOW_MATHC99 "C99 math-funcs:"
 #ifdef HAVE_C99_FUNCS
     fprintf(stderr, FMT_S, SHOW_MATHC99, "enabled");
-#else
-    fprintf(stderr, FMT_S, SHOW_MATHC99, "disabled");
-#endif
-#define SHOW_GNUMATH "GNU Bessel-funcs:"
-#ifdef _GNU_SOURCE
+ #define SHOW_GNUMATH "GNU Bessel-funcs:"
+ #ifdef _GNU_SOURCE
         fprintf(stderr, FMT_S, SHOW_GNUMATH, "enabled");
-#else
+ #else
         fprintf(stderr, FMT_S, SHOW_GNUMATH, "disabled");
+ #endif
 #endif
 #ifdef REPETITIONS
     fprintf(stderr, FMT_S, "RE intervals: ", "enabled");

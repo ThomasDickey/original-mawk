@@ -91,7 +91,10 @@ trap 'echo mawk_test failed ; rm -f $STDOUT $STDERR; exit 1'  0
 $PROG -W version
 
 NULLS=`$PROG -W version 2>&1 |fgrep regex |fgrep 'internal' 2>/dev/null`
+C99=`$PROG -W version 2>&1 |fgrep C99 2>/dev/null`
+
 #################################
+
 Begin "testing input and field splitting"
 
 LC_ALL=C $PROG -f wc.awk $dat | cmp -s - wc-awk.out || Fail "wc.awk"
@@ -247,6 +250,26 @@ Begin "testing fixed-width fields"
 LC_ALL=C $PROG -f fw.awk fw.dat | cmp -s - fw.out || Fail "fw.awk"
 
 Finish "fixed-width fields test"
+
+#################################
+
+Begin "testing bit-wise arithmetic"
+
+LC_ALL=C $PROG -f bitwise.awk | cmp -s - bitwise.out || Fail "bitwise.awk"
+
+Finish "bit-wise arithmetic test"
+
+#################################
+
+if test -n "$C99" ; then
+  Begin "testing C99 arithmetic"
+
+  LC_ALL=C $PROG -f c99math.awk | cmp -s - c99math.out || Fail "c99math.awk"
+
+  Finish "C99 arithmetic test"
+else
+  echo "testing C99 arithmetic skipped (C99 arithmetic is currently not enabled)"
+fi
 
 #################################
 
