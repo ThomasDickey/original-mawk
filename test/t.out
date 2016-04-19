@@ -1,0 +1,170 @@
+3
+4
+1
+0 -1
+reg4.1<<:  >>
+reg4.2<<:  >>
+reg4.3<<:  >>
+reg4.4<<:  >>
+reg4.5<<:  >>
+reg4.1<<:  >>
+reg4.2<<:  >>
+reg4.3<<:  >>
+reg4.4<<:  >>
+reg4.5<<:  >>
+reg4.1<<:  >>
+reg4.2<<:  >>
+reg4.3<<:  >>
+reg4.4<<:  >>
+reg4.5<<:  >>
+reg4.1<<:  >>
+reg4.2<<:  >>
+reg4.3<<:  >>
+reg4.4<<:  >>
+reg4.5<<:  >>
+reg4.1<<:  >>
+reg4.2<<:  >>
+reg4.3<<:  >>
+reg4.4<<:  >>
+reg4.5<<:  >>
+reg4.1<<:  >>
+reg4.2<<:  >>
+reg4.3<<:  >>
+reg4.4<<:  >>
+reg4.5<<:  >>
+reg4.1<<:  >>
+reg4.2<<:  >>
+reg4.3<<:  >>
+reg4.4<<:  >>
+reg4.5<<:  >>
+reg4.1<<:  >>
+reg4.2<<:  >>
+reg4.3<<:  >>
+reg4.4<<:  >>
+reg4.5<<:  >>
+reg4.1<<:  >>
+reg4.2<<:  >>
+reg4.3<<:  >>
+reg4.4<<:  >>
+reg4.5<<:  >>
+reg4.1<<:  >>
+reg4.2<<:  >>
+reg4.3<<:  >>
+reg4.4<<:  >>
+reg4.5<<:  >>
+reg4.1<<:  >>
+reg4.2<<:  >>
+reg4.3<<:  >>
+reg4.4<<:  >>
+reg4.5<<:  >>
+reg4.1<<:  >>
+reg4.2<<:  >>
+reg4.3<<:  >>
+reg4.4<<:  >>
+reg4.5<<:  >>
+reg4.1<<:  >>
+reg4.2<<:  >>
+reg4.3<<:  >>
+reg4.4<<:  >>
+reg4.5<<:  >>
+reg4.1<<:  >>
+reg4.2<<:  >>
+reg4.3<<:  >>
+reg4.4<<:  >>
+reg4.5<<:  >>
+reg4.1<<:  >>
+reg4.2<<:  >>
+reg4.3<<:  >>
+reg4.4<<:  >>
+reg4.5<<:  >>
+reg4.1<<:  >>
+reg4.2<<:  >>
+reg4.3<<:  >>
+reg4.4<<:  >>
+reg4.5<<:  >>
+reg4.3<<: } >>
+reg4.4<<: } >>
+reg4.1<<:  >>
+reg4.2<<:  >>
+reg4.3<<:  >>
+reg4.4<<:  >>
+reg4.5<<:  >>
+reg4.1<<:  >>
+reg4.2<<:  >>
+reg4.3<<:  >>
+reg4.4<<:  >>
+reg4.5<<:  >>
+reg4.1<<:  >>
+reg4.2<<:  >>
+reg4.3<<:  >>
+reg4.4<<:  >>
+reg4.5<<:  >>
+reg4.3<<: { >>
+reg4.4<<: { >>
+reg4.1<<:  >>
+reg4.2<<:  >>
+reg4.3<<:  >>
+reg4.4<<:  >>
+reg4.5<<:  >>
+reg4.1<<:  >>
+reg4.2<<:  >>
+reg4.3<<:  >>
+reg4.4<<:  >>
+reg4.5<<:  >>
+reg4.1<<:  >>
+reg4.2<<:  >>
+reg4.3<<:  >>
+reg4.4<<:  >>
+reg4.5<<:  >>
+26..3:   each array is of size A_HASH_PRIME.
+reg5.2<<A_H>>
+11..3:   On the D_ANODE list, we use real deletion and move to the
+reg5.2<<D_A>>
+32..3:     (1) d1 != d2, but sprintf(A_FMT,d1) == sprintf(A_FMT,d1)
+reg5.2<<A_F>>
+42..3:#define  _dhash(d)    (((int)(d)&0x7fff)%A_HASH_PRIME)
+reg5.2<<A_H>>
+34..3:#define  _dhash(d)    (((int)(d)&0x7fff)%A_HASH_PRIME)
+reg5.3<<0x7>>
+27..3:   unsigned h = hash(s) % A_HASH_PRIME ;
+reg5.2<<A_H>>
+22..3:       p->cp->type = C_NOINIT ;
+reg5.2<<C_N>>
+11..3:/* on the D_ANODE list, when we find a node we move it
+reg5.2<<D_A>>
+8..3:static D_ANODE  *find_by_dval(A, d, cflag)
+reg5.2<<D_A>>
+12..3:  register D_ANODE *p = A[h].dlink ;
+reg5.2<<D_A>>
+3..3:  D_ANODE *q = 0 ; /* trails p for move to front */
+reg5.2<<D_A>>
+28..3:           zfree(p, sizeof(D_ANODE)) ;
+reg5.2<<D_A>>
+1..1:extern unsigned hash() ;
+reg6.2<<e>>
+23..6:   which is two hash tables in one.  One for strings
+reg6.1<<ables >>
+23..2:   which is two hash tables in one.  One for strings
+reg6.3<<ab>>
+19..5:   and one for doubles.
+reg6.4<<bles.>>
+1 aFOOc
+4 XaXbXcX
+3 XaXcX
+1 abX
+1 abX
+1 abcX
+2 aXcX
+1 aFOOc
+4 XaXbXcX
+3 XaXcX
+1 abX
+1 abX
+1 abcX
+1 a(b)c
+4 {}a{}b{}c{}
+3 {}a{b}c{}
+4 {}a{b}{b}c{b}
+3 a(b)(b)c(b)
+1 a b c
+1 a b c
